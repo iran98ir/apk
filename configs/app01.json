@@ -273,7 +273,7 @@
         "border_width": 0,
         "icon": "",
         "title": "",
-        "title_color": "#00ffff",
+        "title_color": "#00ff00",
         "text": "",
         "text_color": "#B8B0A0",
         "bg_color": "#1B2A4A",
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 22:27:42",
+        "saved_at": "2026-10-08 22:33:26",
         "saved_by": "admin"
     }
 }
