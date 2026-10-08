@@ -22,13 +22,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ===== ۱. دریافت کد =====
       - name: 📥 دریافت کد
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ===== ۲. تشخیص اپ =====
       - name: 🔍 تشخیص اپ
         id: detect
         run: |
@@ -45,14 +43,12 @@ jobs:
           echo "app_slug=$APP" >> $GITHUB_OUTPUT
           echo "✅ اپ: $APP"
 
-      # ===== ۳. نصب Java 17 =====
       - name: ☕ نصب Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # ===== ۴. راه‌اندازی Android SDK =====
       - name: 🤖 راه‌اندازی Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -60,16 +56,13 @@ jobs:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
-      # ===== ۵. دانلود gradle-wrapper.jar =====
       - name: 📦 دانلود Gradle Wrapper JAR
         run: |
           mkdir -p template/gradle/wrapper
           curl -L -o template/gradle/wrapper/gradle-wrapper.jar \
             https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
           chmod +x template/gradlew
-          echo "✅ wrapper.jar دانلود شد"
 
-      # ===== ۶. کپی تنظیمات =====
       - name: 📋 کپی تنظیمات اپ
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -81,7 +74,6 @@ jobs:
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ تنظیمات $APP کپی شد"
 
-      # ===== ۷. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
@@ -91,56 +83,50 @@ jobs:
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
 
-      # ===== ۸. کپی آیکون‌ها از پوشه‌ی template/icons =====
-      - name: 🎨 کپی آیکون‌ها از template/icons
+      - name: 🎨 کپی آیکون‌ها
         run: |
-          echo "📥 کپی آیکون‌ها از پوشه‌ی template/icons..."
+          echo "📥 کپی آیکون‌ها از template/icons..."
 
-          # حذف آیکون‌های پیش‌فرض
           rm -rf template/app/src/main/res/mipmap-anydpi-v26
 
-          # ساخت پوشه‌های mipmap
           mkdir -p template/app/src/main/res/mipmap-mdpi
           mkdir -p template/app/src/main/res/mipmap-hdpi
           mkdir -p template/app/src/main/res/mipmap-xhdpi
           mkdir -p template/app/src/main/res/mipmap-xxhdpi
 
-          # کپی آیکون‌ها (اگه وجود داشته باشن)
+          # ===== mdpi =====
           if [ -f "template/icons/mdpi/icon.png" ]; then
             cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher.png
-            echo "✅ mdpi/icon.png"
-          else
-            echo "⚠️ mdpi/icon.png نیست"
+            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+            echo "✅ mdpi"
           fi
 
+          # ===== hdpi =====
           if [ -f "template/icons/hdpi/icon.png" ]; then
             cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher.png
-            echo "✅ hdpi/icon.png"
-          else
-            echo "⚠️ hdpi/icon.png نیست"
+            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+            echo "✅ hdpi"
           fi
 
+          # ===== xhdpi =====
           if [ -f "template/icons/xhdpi/icon.png" ]; then
             cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            echo "✅ xhdpi/icon.png"
-          else
-            echo "⚠️ xhdpi/icon.png نیست"
+            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+            echo "✅ xhdpi"
           fi
 
+          # ===== xxhdpi =====
           if [ -f "template/icons/xxhdpi/icon.png" ]; then
             cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            echo "✅ xxhdpi/icon.png"
-          else
-            echo "⚠️ xxhdpi/icon.png نیست"
+            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+            echo "✅ xxhdpi"
           fi
 
-          # لوگو اسپلش
+          # ===== splash =====
           mkdir -p template/app/src/main/res/drawable
           if [ -f "template/icons/splash.png" ]; then
             cp template/icons/splash.png template/app/src/main/res/drawable/splash_logo.png
-            echo "✅ splash.png"
-          else
-            echo "⚠️ splash.png نیست"
+            echo "✅ splash"
           fi
 
           echo ""
@@ -148,7 +134,6 @@ jobs:
           find template/app/src/main/res -name "ic_launcher*" -type f
           find template/app/src/main/res -name "splash_logo*" -type f
 
-      # ===== ۹. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
           mkdir -p template/app/keystore
@@ -161,13 +146,10 @@ jobs:
             -storepass "rosha${{ github.run_id }}" \
             -keypass "rosha${{ github.run_id }}" \
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
-          echo "✅ Keystore ساخته شد"
 
-      # ===== ۱۰. دسترسی اجرا =====
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
-      # ===== ۱۱. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
@@ -179,7 +161,6 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace
 
-      # ===== ۱۲. تغییر نام =====
       - name: 📝 تغییر نام APK
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -196,7 +177,6 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
-      # ===== ۱۳. آپلود APK =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -204,15 +184,6 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۴. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
-
-      # ===== ۱۵. خلاصه =====
-      - name: ✅ خلاصه
-        run: |
-          echo "🎉 Build موفق"
-          echo "اپ: ${{ steps.detect.outputs.app_slug }}"
-          echo "نسخه: ${{ steps.cfg.outputs.ver_name }}"
-          echo "پکیج: ${{ steps.cfg.outputs.package }}"
