@@ -49,10 +49,12 @@ class VpnWarningActivity : ComponentActivity() {
         val topSubtitle     = AppConfig.str("vpn", "top_subtitle")
         val footnote        = AppConfig.str("vpn", "footnote")
         val showRecheck     = AppConfig.bool("vpn", "show_recheck")
-        val recheckText     = AppConfig.str("vpn", "recheck_text")
-        val recheckBg       = AppConfig.str("vpn", "recheck_bg")
-        val recheckBorder   = AppConfig.color("vpn", "recheck_border")
-        val recheckColor    = AppConfig.color("vpn", "recheck_color")
+
+        // ===== از vpn.recheck =====
+        val recheckText     = AppConfig.str("vpn.recheck", "text")
+        val recheckBg       = AppConfig.str("vpn.recheck", "bg")
+        val recheckBorder   = AppConfig.color("vpn.recheck", "border")
+        val recheckColor    = AppConfig.color("vpn.recheck", "color")
 
         // ===== state_on =====
         val onIcon  = AppConfig.str("vpn.state_on", "icon")
