@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- =========================================================
-     AndroidManifest.xml  —  مانیفست اپ
+     AndroidManifest.xml — مانیفست اپ
      مسیر: template/app/src/main/AndroidManifest.xml
      ========================================================= -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -39,17 +39,24 @@
         android:theme="@style/Theme.Rosha"
         tools:targetApi="34">
 
-        <!-- ===== Splash ===== -->
+        <!-- ===== WebView (LAUNCHER) ===== -->
         <activity
-            android:name=".SplashActivity"
+            android:name=".WebViewActivity"
             android:exported="true"
-            android:theme="@style/Theme.Rosha.Splash"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- ===== Splash ===== -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Rosha.Splash"
+            android:screenOrientation="portrait" />
 
         <!-- ===== Onboarding ===== -->
         <activity
@@ -62,13 +69,6 @@
             android:name=".VpnWarningActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-
-        <!-- ===== WebView ===== -->
-        <activity
-            android:name=".WebViewActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" />
 
         <!-- ===== Error ===== -->
         <activity
