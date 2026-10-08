@@ -279,7 +279,7 @@
         "bg_color": "#1B2A4A",
         "border_color": "#0000ff",
         "overlay_color": "rgba(0,0,0,0.6)",
-        "btn_confirm_text": "بله، خروج",
+        "btn_confirm_text": "بله، خروج v",
         "btn_confirm_bg": "#ffff00",
         "btn_confirm_color": "#000000",
         "btn_cancel_text": "نه، بمون",
@@ -289,25 +289,25 @@
     },
     "advanced": {
         "sign_type": "new",
-        "keep_old_app": 0,
+        "keep_old_app": 1,
         "keystore_alias": "",
         "keystore_pass": "",
         "key_pass": "",
         "keystore_file": "",
-        "output_name": "",
+        "output_name": "app-call1",
         "output_format": "apk",
         "min_sdk": 24,
         "target_sdk": 34,
         "architecture": "universal",
-        "auto_version": 0,
-        "auto_build": 0,
+        "auto_version": 1,
+        "auto_build": 1,
         "description": "",
         "developer_name": "",
         "developer_email": "",
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 12:53:59",
+        "saved_at": "2026-10-08 13:14:12",
         "saved_by": "admin"
     }
 }
