@@ -1,46 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- =========================================================
-     colors.xml  —  رنگ‌های پیش‌فرض
+     colors.xml — رنگ‌های پیش‌فرض (اجباری برای تم)
      مسیر: template/app/src/main/res/values/colors.xml
      =========================================================
-     📌 اینا پیش‌فرض هستن
-     📌 رنگ‌های واقعی از config.json خونده میشن
+     📌 فقط برای تم پروژه قبل از لود config.json
+     📌 رنگ‌های واقعی از config.json میان
      ========================================================= -->
 <resources>
+
+    <!-- ===== پس‌زمینه پیش‌فرض ===== -->
+    <color name="background">#0D1B2E</color>
 
     <!-- ===== اصلی ===== -->
     <color name="primary">#E8A33D</color>
     <color name="primary_dark">#CC8A28</color>
-    <color name="primary_light">#F0BC66</color>
-
-    <!-- ===== پس‌زمینه ===== -->
-    <color name="background">#0D1B2E</color>
-    <color name="background_dark">#07101C</color>
-    <color name="surface">#1B2A4A</color>
 
     <!-- ===== متن ===== -->
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B8B0A0</color>
-    <color name="text_muted">#7A6A60</color>
-
-    <!-- ===== دکمه ===== -->
-    <color name="button_bg">#E8A33D</color>
-    <color name="button_text">#FFFFFF</color>
-
-    <!-- ===== وضعیت ===== -->
-    <color name="success">#2D7A5F</color>
-    <color name="error">#C73E3E</color>
-    <color name="warning">#E8A33D</color>
-    <color name="info">#5B7FFF</color>
 
     <!-- ===== Overlay ===== -->
     <color name="overlay_60">#99000000</color>
-    <color name="overlay_80">#CC000000</color>
-
-    <!-- ===== سازگاری با آیکون‌های پیش‌فرض ===== -->
-    <color name="colorPrimary">#E8A33D</color>
-    <color name="colorAccent">#C73E3E</color>
-    <color name="colorBackground">#0D1B2E</color>
-    <color name="colorText">#FFFFFF</color>
 
 </resources>
