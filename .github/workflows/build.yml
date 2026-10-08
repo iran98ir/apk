@@ -91,81 +91,62 @@ jobs:
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
 
-      # ===== ۸. دانلود آیکون‌ها از پنل =====
-      - name: 🎨 دانلود آیکون‌ها از پنل
+      # ===== ۸. کپی آیکون‌ها از پوشه‌ی template/icons =====
+      - name: 🎨 کپی آیکون‌ها از template/icons
         run: |
-          APP="${{ steps.detect.outputs.app_slug }}"
-          BASE_URL="https://rosha-24.ir"
-          PROXY="https://api.allorigins.win/raw?url="
-          PROXY2="https://corsproxy.io/?"
+          echo "📥 کپی آیکون‌ها از پوشه‌ی template/icons..."
 
-          ICON_48=$(jq -r '.branding.icon_48 // ""' "configs/$APP.json")
-          ICON_72=$(jq -r '.branding.icon_72 // ""' "configs/$APP.json")
-          ICON_96=$(jq -r '.branding.icon_96 // ""' "configs/$APP.json")
-          ICON_144=$(jq -r '.branding.icon_144 // ""' "configs/$APP.json")
-
-          echo "📥 دانلود آیکون‌ها..."
-
+          # حذف آیکون‌های پیش‌فرض
           rm -rf template/app/src/main/res/mipmap-anydpi-v26
 
+          # ساخت پوشه‌های mipmap
           mkdir -p template/app/src/main/res/mipmap-mdpi
           mkdir -p template/app/src/main/res/mipmap-hdpi
           mkdir -p template/app/src/main/res/mipmap-xhdpi
           mkdir -p template/app/src/main/res/mipmap-xxhdpi
 
-          download_icon() {
-            local url="$1"
-            local output="$2"
-            local name="$3"
+          # کپی آیکون‌ها (اگه وجود داشته باشن)
+          if [ -f "template/icons/mdpi/icon.png" ]; then
+            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            echo "✅ mdpi/icon.png"
+          else
+            echo "⚠️ mdpi/icon.png نیست"
+          fi
 
-            echo "🔽 $name"
+          if [ -f "template/icons/hdpi/icon.png" ]; then
+            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            echo "✅ hdpi/icon.png"
+          else
+            echo "⚠️ hdpi/icon.png نیست"
+          fi
 
-            if curl -f -L --max-time 15 -o "$output" "$url" 2>/dev/null; then
-              echo "  ✅ مستقیم"
-              return 0
-            fi
+          if [ -f "template/icons/xhdpi/icon.png" ]; then
+            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            echo "✅ xhdpi/icon.png"
+          else
+            echo "⚠️ xhdpi/icon.png نیست"
+          fi
 
-            local encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$url")
-            if curl -f -L --max-time 30 -o "$output" "${PROXY}${encoded}" 2>/dev/null; then
-              echo "  ✅ allorigins"
-              return 0
-            fi
+          if [ -f "template/icons/xxhdpi/icon.png" ]; then
+            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            echo "✅ xxhdpi/icon.png"
+          else
+            echo "⚠️ xxhdpi/icon.png نیست"
+          fi
 
-            if curl -f -L --max-time 30 -o "$output" "${PROXY2}${encoded}" 2>/dev/null; then
-              echo "  ✅ corsproxy"
-              return 0
-            fi
-
-            if curl -f -L --max-time 30 -o "$output" "https://images.weserv.nl/?url=${url#https://}" 2>/dev/null; then
-              echo "  ✅ weserv"
-              return 0
-            fi
-
-            echo "  ❌ fail"
-            return 1
-          }
-
-          [ -n "$ICON_48" ] && [ "$ICON_48" != "null" ] && \
-            download_icon "$BASE_URL$ICON_48" "template/app/src/main/res/mipmap-mdpi/ic_launcher.png" "icon_48"
-
-          [ -n "$ICON_72" ] && [ "$ICON_72" != "null" ] && \
-            download_icon "$BASE_URL$ICON_72" "template/app/src/main/res/mipmap-hdpi/ic_launcher.png" "icon_72"
-
-          [ -n "$ICON_96" ] && [ "$ICON_96" != "null" ] && \
-            download_icon "$BASE_URL$ICON_96" "template/app/src/main/res/mipmap-xhdpi/ic_launcher.png" "icon_96"
-
-          [ -n "$ICON_144" ] && [ "$ICON_144" != "null" ] && \
-            download_icon "$BASE_URL$ICON_144" "template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png" "icon_144"
+          # لوگو اسپلش
+          mkdir -p template/app/src/main/res/drawable
+          if [ -f "template/icons/splash.png" ]; then
+            cp template/icons/splash.png template/app/src/main/res/drawable/splash_logo.png
+            echo "✅ splash.png"
+          else
+            echo "⚠️ splash.png نیست"
+          fi
 
           echo ""
           echo "🎨 لیست آیکون‌ها:"
           find template/app/src/main/res -name "ic_launcher*" -type f
-
-          echo ""
-          echo "📏 ابعاد:"
-          for f in $(find template/app/src/main/res -name "ic_launcher.png"); do
-            file "$f"
-          done
+          find template/app/src/main/res -name "splash_logo*" -type f
 
       # ===== ۹. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
