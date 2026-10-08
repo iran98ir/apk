@@ -147,7 +147,7 @@
         }
     },
     "webview": {
-        "url": "https//rosha-24.or/app/app1",
+        "url": "https://rosha-24.ir/app/app1/",
         "url_type": "single",
         "url_deep_link": "",
         "url_home": "",
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 08:33:29",
+        "saved_at": "2026-10-08 10:10:23",
         "saved_by": "admin"
     }
-    }
+}
