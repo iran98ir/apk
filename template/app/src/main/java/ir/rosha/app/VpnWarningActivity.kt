@@ -1,10 +1,8 @@
 /* =========================================================
-   VpnWarningActivity.kt  —  صفحه‌ی هشدار فیلترشکن
+   VpnWarningActivity.kt — هشدار فیلترشکن
    مسیر: template/app/src/main/java/ir/rosha/app/VpnWarningActivity.kt
    =========================================================
-   📌 این صفحه فقط هشداره
-   📌 کاربر چه VPN روشن باشه چه نباشه میتونه رد بشه
-   📌 با زدن دکمه‌ی ورود → میره به WebView
+   📌 همه چیز از config.json خونده می‌شه
    ========================================================= */
 
 package ir.rosha.app
@@ -35,18 +33,75 @@ class VpnWarningActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ===== تشخیص وضعیت VPN =====
+        // ===== از config =====
+        val enabled = AppConfig.bool("vpn", "enabled", false)
+
+        // اگه خاموش بود → مستقیم WebView
+        if (!enabled) {
+            startActivity(Intent(this, WebViewActivity::class.java))
+            finish()
+            return
+        }
+
         val vpnStatus = VpnDetector.detect(this)
+
+        val topTitle = AppConfig.str("vpn", "top_title", "توجه مهم")
+        val topSubtitle = AppConfig.str("vpn", "top_subtitle", "")
+        val footnote = AppConfig.str("vpn", "footnote", "")
+        val showRecheck = AppConfig.bool("vpn", "show_recheck", true)
+
+        // ===== recheck =====
+        val recheckText = AppConfig.str("vpn", "recheck_text", "🔄 بررسی مجدد")
+        val recheckBg = AppConfig.str("vpn", "recheck_bg", "transparent")
+        val recheckBorder = AppConfig.color("vpn", "recheck_border", "#B8B0A0")
+        val recheckColor = AppConfig.color("vpn", "recheck_color", "#B8B0A0")
+
+        // ===== state_on =====
+        val onIcon = AppConfig.str("vpn", "state_on_icon", "⚠️")
+        val onTitle = AppConfig.str("vpn", "state_on_title", "فیلترشکن شما روشن است")
+        val onText = AppConfig.str("vpn", "state_on_text", "")
+        val onColor = AppConfig.color("vpn", "state_on_color", "#C73E3E")
+        val onBg = AppConfig.color("vpn", "state_on_bg", "#5B1A1D")
+        val onBtn = AppConfig.str("vpn", "state_on_btn", "ورود")
+
+        // ===== state_off =====
+        val offIcon = AppConfig.str("vpn", "state_off_icon", "✅")
+        val offTitle = AppConfig.str("vpn", "state_off_title", "آماده‌ی شروع هستی")
+        val offText = AppConfig.str("vpn", "state_off_text", "")
+        val offColor = AppConfig.color("vpn", "state_off_color", "#2D7A5F")
+        val offBg = AppConfig.color("vpn", "state_off_bg", "#0D1B2E")
+        val offBtn = AppConfig.str("vpn", "state_off_btn", "ورود")
+
+        // ===== state_unknown =====
+        val unkIcon = AppConfig.str("vpn", "state_unknown_icon", "🔒")
+        val unkTitle = AppConfig.str("vpn", "state_unknown_title", "برای شروع آماده‌ای")
+        val unkText = AppConfig.str("vpn", "state_unknown_text", "")
+        val unkColor = AppConfig.color("vpn", "state_unknown_color", "#E8A33D")
+        val unkBg = AppConfig.color("vpn", "state_unknown_bg", "#0D1B2E")
+        val unkBtn = AppConfig.str("vpn", "state_unknown_btn", "ورود")
+
+        val data = when (vpnStatus) {
+            VpnState.ON -> VpnScreenData(onIcon, onTitle, onText, onColor, onBg, onBtn)
+            VpnState.OFF -> VpnScreenData(offIcon, offTitle, offText, offColor, offBg, offBtn)
+            VpnState.UNKNOWN -> VpnScreenData(unkIcon, unkTitle, unkText, unkColor, unkBg, unkBtn)
+        }
 
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = Color(0xFF0D1B2E)
+                color = Color(data.bg)
             ) {
                 VpnWarningScreen(
-                    vpnStatus = vpnStatus,
+                    data = data,
+                    topTitle = topTitle,
+                    topSubtitle = topSubtitle,
+                    footnote = footnote,
+                    showRecheck = showRecheck,
+                    recheckText = recheckText,
+                    recheckBorder = recheckBorder,
+                    recheckColor = recheckColor,
+                    onRecheck = { recreate() },
                     onEnter = {
-                        // ===== کاربر وارد شد → برو به WebView =====
                         startActivity(Intent(this, WebViewActivity::class.java))
                         finish()
                     }
@@ -56,49 +111,39 @@ class VpnWarningActivity : ComponentActivity() {
     }
 }
 
-/* =========================================================
-   وضعیت VPN
-   ========================================================= */
 enum class VpnState {
-    ON,        // مطمئنیم روشنه
-    OFF,       // مطمئنیم خاموشه
-    UNKNOWN    // نمیدونیم
+    ON, OFF, UNKNOWN
 }
+
+private data class VpnScreenData(
+    val icon: String,
+    val title: String,
+    val text: String,
+    val color: Int,
+    val bg: Int,
+    val btn: String
+)
 
 @Composable
 private fun VpnWarningScreen(
-    vpnStatus: VpnState,
+    data: VpnScreenData,
+    topTitle: String,
+    topSubtitle: String,
+    footnote: String,
+    showRecheck: Boolean,
+    recheckText: String,
+    recheckBorder: Int,
+    recheckColor: Int,
+    onRecheck: () -> Unit,
     onEnter: () -> Unit
 ) {
-
-    // ===== متن‌ها بر اساس وضعیت =====
-    val (icon, title, text, color) = when (vpnStatus) {
-        VpnState.ON -> VpnScreenData(
-            icon = "⚠️",
-            title = "فیلترشکن شما روشن است",
-            text = "برای استفاده‌ی کامل از اپ، لطفاً فیلترشکن خود را خاموش کنید.",
-            color = Color(0xFFC73E3E)
-        )
-        VpnState.OFF -> VpnScreenData(
-            icon = "✅",
-            title = "آماده‌ی شروع هستی",
-            text = "لطفاً از خاموش بودن فیلترشکن مطمئن شو و وارد شو.",
-            color = Color(0xFF2D7A5F)
-        )
-        VpnState.UNKNOWN -> VpnScreenData(
-            icon = "🔒",
-            title = "برای شروع آماده‌ای",
-            text = "توصیه می‌کنیم فیلترشکن شما خاموش باشد تا اپ به‌درستی کار کند.",
-            color = Color(0xFFE8A33D)
-        )
-    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2E), Color(0xFF1B2A4A))
+                    colors = listOf(Color(data.bg), Color(0xFF1B2A4A))
                 )
             )
     ) {
@@ -111,26 +156,49 @@ private fun VpnWarningScreen(
             verticalArrangement = Arrangement.Center
         ) {
 
+            // ===== عنوان بالا =====
+            if (topTitle.isNotEmpty()) {
+                Text(
+                    text = topTitle,
+                    color = Color(data.color),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            if (topSubtitle.isNotEmpty()) {
+                Text(
+                    text = topSubtitle,
+                    color = Color(0xFFB8B0A0),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
             // ===== آیکون =====
             Box(
                 modifier = Modifier
                     .size(140.dp)
                     .clip(CircleShape)
-                    .background(color.copy(alpha = 0.15f)),
+                    .background(Color(data.color).copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = icon,
+                    text = data.icon,
                     fontSize = 64.sp
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ===== تیتر =====
+            // ===== عنوان =====
             Text(
-                text = title,
-                color = color,
+                text = data.title,
+                color = Color(data.color),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
@@ -140,18 +208,20 @@ private fun VpnWarningScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // ===== متن =====
-            Text(
-                text = text,
-                color = Color(0xFFB8B0A0),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 24.sp
-            )
+            if (data.text.isNotEmpty()) {
+                Text(
+                    text = data.text,
+                    color = Color(0xFFB8B0A0),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ===== دکمه‌ی ورود =====
+            // ===== دکمه ورود =====
             Button(
                 onClick = onEnter,
                 modifier = Modifier
@@ -164,33 +234,45 @@ private fun VpnWarningScreen(
                 )
             ) {
                 Text(
-                    text = "ورود",
+                    text = data.btn,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Black
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // ===== دکمه بررسی مجدد =====
+            if (showRecheck) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onRecheck,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(recheckColor)
+                    )
+                ) {
+                    Text(
+                        text = recheckText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
 
             // ===== متن پایین =====
-            Text(
-                text = "در صورت روشن بودن فیلترشکن، ممکن است اپ به‌درستی کار نکند.",
-                color = Color(0xFF7A6A60),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 18.sp
-            )
+            if (footnote.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = footnote,
+                    color = Color(0xFF7A6A60),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
+            }
         }
     }
 }
-
-/* =========================================================
-   داده‌ی صفحه
-   ========================================================= */
-private data class VpnScreenData(
-    val icon: String,
-    val title: String,
-    val text: String,
-    val color: Color
-)
