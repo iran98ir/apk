@@ -1,18 +1,18 @@
 /* =========================================================
    RoshaApplication.kt — کلاس Application
    مسیر: template/app/src/main/java/ir/rosha/app/RoshaApplication.kt
-   =========================================================
-   📌 فقط از config.json می‌خونه
-   📌 اگه کلید اجباری نبود → اپ کرش می‌کنه
    ========================================================= */
 
 package ir.rosha.app
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 
 class RoshaApplication : Application() {
+
+    private val TAG = "RoshaApplication"
 
     override fun onCreate() {
         super.onCreate()
@@ -22,11 +22,12 @@ class RoshaApplication : Application() {
         // ===== لود تنظیمات =====
         AppConfig.init(this)
 
-        // ===== اعتبارسنجی config =====
+        // ===== اعتبارسنجی config (فقط لاگ، بدون کرش) =====
         val missing = AppConfig.validateAll()
         if (missing.isNotEmpty()) {
-            val errorMsg = "❌ خطا در config.json:\n" + missing.joinToString("\n")
-            throw IllegalStateException(errorMsg)
+            Log.w(TAG, "⚠️ کلیدهای غایب: ${missing.size} مورد")
+        } else {
+            Log.d(TAG, "✅ config.json کامله")
         }
 
         // ===== غیرفعال کردن دارک مود =====
