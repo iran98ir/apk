@@ -1,6 +1,9 @@
 /* =========================================================
    RoshaApplication.kt — کلاس Application
    مسیر: template/app/src/main/java/ir/rosha/app/RoshaApplication.kt
+   =========================================================
+   📌 فقط از config.json می‌خونه
+   📌 اگه کلید اجباری نبود → اپ کرش می‌کنه
    ========================================================= */
 
 package ir.rosha.app
@@ -18,6 +21,13 @@ class RoshaApplication : Application() {
 
         // ===== لود تنظیمات =====
         AppConfig.init(this)
+
+        // ===== اعتبارسنجی config =====
+        val missing = AppConfig.validateAll()
+        if (missing.isNotEmpty()) {
+            val errorMsg = "❌ خطا در config.json:\n" + missing.joinToString("\n")
+            throw IllegalStateException(errorMsg)
+        }
 
         // ===== غیرفعال کردن دارک مود =====
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
