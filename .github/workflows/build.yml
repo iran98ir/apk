@@ -110,9 +110,9 @@ jobs:
       # ===== ۹. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
-          mkdir -p template/keystore
+          mkdir -p template/app/keystore
           keytool -genkeypair -v \
-            -keystore template/keystore/temp.jks \
+            -keystore template/app/keystore/temp.jks \
             -alias tempkey \
             -keyalg RSA \
             -keysize 2048 \
@@ -161,7 +161,7 @@ jobs:
       # ===== ۱۴. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
-        run: rm -rf template/keystore
+        run: rm -rf template/app/keystore
 
       # ===== ۱۵. خلاصه =====
       - name: ✅ خلاصه
