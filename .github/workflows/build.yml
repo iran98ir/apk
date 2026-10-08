@@ -36,11 +36,9 @@ jobs:
             APP="${{ github.event.inputs.app_slug }}"
             echo "🔵 حالت دستی: $APP"
           else
-            # فایل‌های .json که در آخرین commit تغییر کردن
             CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'configs/*.json' | head -n 1)
             echo "🔵 فایل تغییر یافته: $CHANGED"
             if [ -z "$CHANGED" ]; then
-              # اگه هیچی تغییر نکرده، همه فایل‌ها رو ببین
               CHANGED=$(ls configs/*.json | head -n 1)
             fi
             APP=$(basename "$CHANGED" .json)
@@ -71,7 +69,22 @@ jobs:
             https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
           chmod +x template/gradlew
 
-      # ===== ۶. کپی تنظیمات =====
+      # ===== ۶. 🧹 پاک کردن کش قدیمی =====
+      - name: 🧹 پاک کردن کش قدیمی
+        run: |
+          echo "🧹 پاک کردن کش قدیمی..."
+          rm -rf template/app/build
+          rm -rf template/build
+          rm -rf template/.gradle
+          rm -rf template/app/.gradle
+          rm -rf ~/.gradle/caches/build-cache-1
+          rm -rf ~/.gradle/caches/transforms-*
+          echo "✅ کش پاک شد"
+          echo ""
+          echo "📁 محتوای template/app/:"
+          ls -la template/app/ || echo "template/app/ نیست"
+
+      # ===== ۷. کپی تنظیمات =====
       - name: 📋 کپی تنظیمات
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -83,7 +96,7 @@ jobs:
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ config.json کپی شد از $APP"
 
-      # ===== ۷. خواندن اطلاعات =====
+      # ===== ۸. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
@@ -103,7 +116,7 @@ jobs:
           echo "out_name=$OUT_NAME" >> $GITHUB_OUTPUT
           echo "📦 APK: $OUT_NAME.apk"
 
-      # ===== ۸. کپی آیکون‌ها =====
+      # ===== ۹. کپی آیکون‌ها =====
       - name: 🎨 کپی آیکون‌ها
         run: |
           rm -rf template/app/src/main/res/mipmap-anydpi-v26
@@ -133,10 +146,7 @@ jobs:
           [ -f "template/icons/splash.png" ] && \
             cp template/icons/splash.png template/app/src/main/res/drawable/splash_logo.png && echo "✅ splash"
 
-          echo ""
-          find template/app/src/main/res -name "ic_launcher*" -type f
-
-      # ===== ۹. Keystore =====
+      # ===== ۱۰. Keystore =====
       - name: 🔑 ساخت keystore
         run: |
           mkdir -p template/app/keystore
@@ -153,19 +163,19 @@ jobs:
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
-      # ===== ۱۰. Build APK =====
+      # ===== ۱۱. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
           KEYSTORE_PATH="$PWD/app/keystore/temp.jks"
-          ./gradlew clean assembleRelease \
+          ./gradlew clean --no-build-cache assembleRelease \
             -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="rosha${{ github.run_id }}" \
             -Pandroid.injected.signing.key.alias=tempkey \
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
-            --no-daemon --stacktrace
+            --no-daemon --stacktrace --refresh-dependencies
 
-      # ===== ۱۱. تغییر نام APK =====
+      # ===== ۱۲. تغییر نام APK =====
       - name: 📝 تغییر نام APK
         run: |
           OUT_NAME="${{ steps.cfg.outputs.out_name }}"
@@ -178,7 +188,7 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
-      # ===== ۱۲. آپلود =====
+      # ===== ۱۳. آپلود =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -186,7 +196,7 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۳. پاک کردن keystore =====
+      # ===== ۱۴. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
