@@ -2,7 +2,8 @@
    OnboardingActivity.kt — ۳ صفحه اول
    مسیر: template/app/src/main/java/ir/rosha/app/OnboardingActivity.kt
    =========================================================
-   📌 همه چیز از config.json خونده می‌شه
+   📌 فقط از config.json می‌خونه
+   📌 هیچ پیش‌فرضی نداره
    ========================================================= */
 
 package ir.rosha.app
@@ -37,30 +38,30 @@ class OnboardingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ===== از config =====
-        val enabled = AppConfig.bool("onboarding", "enabled", true)
+        // ===== از config.json =====
+        val enabled        = AppConfig.bool("onboarding", "enabled")
+        val skipText       = AppConfig.str("onboarding", "skip_text")
+        val nextText       = AppConfig.str("onboarding", "next_text")
+        val prevText       = AppConfig.str("onboarding", "prev_text")
+        val startText      = AppConfig.str("onboarding", "start_text")
+        val btnBg          = AppConfig.color("onboarding", "btn_bg")
+        val btnTextColor   = AppConfig.color("onboarding", "btn_text_color")
+        val dotActive      = AppConfig.color("onboarding", "dot_active")
+        val dotInactive    = AppConfig.color("onboarding", "dot_inactive")
 
-        // اگه خاموش بود → مستقیم برو WebView
+        // ===== اگه خاموش بود =====
         if (!enabled) {
             getSharedPreferences("app_prefs", MODE_PRIVATE)
                 .edit()
                 .putBoolean("onboarding_done", true)
                 .apply()
+
             startActivity(Intent(this, WebViewActivity::class.java))
             finish()
             return
         }
 
-        val skipText = AppConfig.str("onboarding", "skip_text", "رد کردن")
-        val nextText = AppConfig.str("onboarding", "next_text", "بعدی")
-        val prevText = AppConfig.str("onboarding", "prev_text", "قبلی")
-        val startText = AppConfig.str("onboarding", "start_text", "شروع کن")
-        val btnBg = AppConfig.color("onboarding", "btn_bg", "#E8A33D")
-        val btnTextColor = AppConfig.color("onboarding", "btn_text_color", "#FFFFFF")
-        val dotActive = AppConfig.color("onboarding", "dot_active", "#E8A33D")
-        val dotInactive = AppConfig.color("onboarding", "dot_inactive", "#4A3A30")
-
-        // ===== اسلایدها =====
+        // ===== ساخت اسلایدها =====
         val slides = listOf(
             buildSlide(1),
             buildSlide(2),
@@ -73,16 +74,16 @@ class OnboardingActivity : ComponentActivity() {
                 color = Color(0xFF0D1B2E)
             ) {
                 OnboardingScreen(
-                    slides = slides,
-                    skipText = skipText,
-                    nextText = nextText,
-                    prevText = prevText,
-                    startText = startText,
-                    btnBg = btnBg,
-                    btnTextColor = btnTextColor,
-                    dotActive = dotActive,
-                    dotInactive = dotInactive,
-                    onFinish = {
+                    slides        = slides,
+                    skipText      = skipText,
+                    nextText      = nextText,
+                    prevText      = prevText,
+                    startText     = startText,
+                    btnBg         = btnBg,
+                    btnTextColor  = btnTextColor,
+                    dotActive     = dotActive,
+                    dotInactive   = dotInactive,
+                    onFinish      = {
                         getSharedPreferences("app_prefs", MODE_PRIVATE)
                             .edit()
                             .putBoolean("onboarding_done", true)
@@ -99,25 +100,20 @@ class OnboardingActivity : ComponentActivity() {
     private fun buildSlide(num: Int): SlideData {
         val prefix = "s${num}_"
         return SlideData(
-            enabled = AppConfig.bool("onboarding", "${prefix}enabled", true),
-            icon = if (AppConfig.has("onboarding", "${prefix}title")) "✨" else "✨",
-            title = AppConfig.str("onboarding", "${prefix}title", ""),
-            text = AppConfig.str("onboarding", "${prefix}text", ""),
-            titleColor = AppConfig.color("onboarding", "${prefix}title_color", "#FFFFFF"),
-            textColor = AppConfig.color("onboarding", "${prefix}text_color", "#B8B0A0"),
-            bgType = AppConfig.str("onboarding", "${prefix}bg_type", "solid"),
-            bg1 = AppConfig.color("onboarding", "${prefix}bg_1", "#0D1B2E"),
-            bg2 = AppConfig.color("onboarding", "${prefix}bg_2", "#1B2A4A")
+            enabled     = AppConfig.bool("onboarding", "${prefix}enabled"),
+            title       = AppConfig.str("onboarding", "${prefix}title"),
+            text        = AppConfig.str("onboarding", "${prefix}text"),
+            titleColor  = AppConfig.color("onboarding", "${prefix}title_color"),
+            textColor   = AppConfig.color("onboarding", "${prefix}text_color"),
+            bgType      = AppConfig.str("onboarding", "${prefix}bg_type"),
+            bg1         = AppConfig.color("onboarding", "${prefix}bg_1"),
+            bg2         = AppConfig.color("onboarding", "${prefix}bg_2")
         )
     }
 }
 
-/* =========================================================
-   داده‌ی اسلاید
-   ========================================================= */
 data class SlideData(
     val enabled: Boolean,
-    val icon: String,
     val title: String,
     val text: String,
     val titleColor: Int,
@@ -141,7 +137,6 @@ private fun OnboardingScreen(
     dotInactive: Int,
     onFinish: () -> Unit
 ) {
-
     val activeSlides = slides.filter { it.enabled }.ifEmpty { slides }
 
     val pagerState = rememberPagerState(pageCount = { activeSlides.size })
@@ -162,7 +157,6 @@ private fun OnboardingScreen(
             .fillMaxSize()
             .background(bgGradient)
     ) {
-
         Column(modifier = Modifier.fillMaxSize()) {
 
             // ===== دکمه رد کردن =====
@@ -228,7 +222,6 @@ private fun OnboardingScreen(
                     .padding(bottom = 40.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 if (pagerState.currentPage > 0) {
                     OutlinedButton(
                         onClick = {
@@ -284,7 +277,6 @@ private fun OnboardingScreen(
 
 @Composable
 private fun SlidePage(slide: SlideData) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -292,8 +284,6 @@ private fun SlidePage(slide: SlideData) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-
-        // ===== آیکون =====
         Box(
             modifier = Modifier
                 .size(140.dp)
@@ -302,14 +292,13 @@ private fun SlidePage(slide: SlideData) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = slide.icon,
+                text = "✨",
                 fontSize = 64.sp
             )
         }
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // ===== عنوان =====
         if (slide.title.isNotEmpty()) {
             Text(
                 text = slide.title,
@@ -321,7 +310,6 @@ private fun SlidePage(slide: SlideData) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ===== متن =====
         if (slide.text.isNotEmpty()) {
             Text(
                 text = slide.text,
