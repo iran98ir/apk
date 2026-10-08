@@ -2,13 +2,16 @@
 # build.yml — GitHub Actions برای ساخت APK
 # مسیر: .github/workflows/build.yml
 # =========================================================
-# 📌 این فایل، وقتی تو پنل دکمه‌ی Build رو بزنی، خودکار اجرا میشه
+# 📌 این فایل با آپلود تغییر تو پوشه‌ی configs/ خودکار اجرا میشه
 # 📌 APK ساخته میشه و به عنوان Artifact ذخیره میشه
 # =========================================================
 
 name: Build APK
 
 on:
+  push:
+    paths:
+      - 'configs/*.json'
   workflow_dispatch:
     inputs:
       app_slug:
@@ -27,18 +30,37 @@ jobs:
       - name: 📥 دریافت کد از ریپو
         uses: actions/checkout@v4
 
-      # ===== ۲. نصب Java 17 =====
+      # ===== ۲. تشخیص شماره‌ی اپ =====
+      - name: 🔍 تشخیص اپ
+        id: detect
+        run: |
+          # ===== اگه workflow_dispatch بود =====
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            APP="${{ github.event.inputs.app_slug }}"
+          else
+            # ===== اگه push بود، از اسم فایل پیداش کن =====
+            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^configs/.*\.json$' | head -n 1)
+            if [ -z "$CHANGED" ]; then
+              APP="app01"
+            else
+              APP=$(basename "$CHANGED" .json)
+            fi
+          fi
+          echo "app_slug=$APP" >> $GITHUB_OUTPUT
+          echo "✅ اپ: $APP"
+
+      # ===== ۳. نصب Java 17 =====
       - name: ☕ نصب Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # ===== ۳. راه‌اندازی Android SDK =====
+      # ===== ۴. راه‌اندازی Android SDK =====
       - name: 🤖 راه‌اندازی Android SDK
         uses: android-actions/setup-android@v3
 
-      # ===== ۴. کش کردن Gradle (سریع‌تر بشه) =====
+      # ===== ۵. کش Gradle =====
       - name: ⚡ کش Gradle
         uses: actions/cache@v4
         with:
@@ -49,10 +71,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # ===== ۵. کپی تنظیمات اپ روی قالب =====
+      # ===== ۶. کپی تنظیمات اپ روی قالب =====
       - name: 📋 کپی تنظیمات اپ
         run: |
-          APP="${{ github.event.inputs.app_slug }}"
+          APP="${{ steps.detect.outputs.app_slug }}"
           if [ ! -f "configs/$APP.json" ]; then
             echo "❌ فایل configs/$APP.json پیدا نشد"
             exit 1
@@ -60,19 +82,21 @@ jobs:
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ تنظیمات $APP کپی شد"
 
-      # ===== ۶. خواندن اطلاعات از JSON =====
-      - name: 📖 خواندن نسخه از config
+      # ===== ۷. خواندن اطلاعات از JSON =====
+      - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
-          APP="${{ github.event.inputs.app_slug }}"
+          APP="${{ steps.detect.outputs.app_slug }}"
           VER_CODE=$(jq -r '.branding.version_code // 1' "configs/$APP.json")
           VER_NAME=$(jq -r '.branding.version_name // "1.0.0"' "configs/$APP.json")
           PKG=$(jq -r '.branding.package_name // "ir.rosha.app"' "configs/$APP.json")
+          APP_NAME=$(jq -r '.branding.app_name // "Rosha"' "configs/$APP.json")
           echo "ver_code=$VER_CODE" >> $GITHUB_OUTPUT
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
+          echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
 
-      # ===== ۷. ساخت keystore موقت =====
+      # ===== ۸. ساخت keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
           mkdir -p template/keystore
@@ -87,11 +111,11 @@ jobs:
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
           echo "✅ Keystore موقت ساخته شد"
 
-      # ===== ۸. اعطای دسترسی اجرا به gradlew =====
-      - name: 🔧 دسترسی اجرا به gradlew
+      # ===== ۹. دسترسی اجرا به gradlew =====
+      - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
-      # ===== ۹. Build APK =====
+      # ===== ۱۰. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
@@ -102,10 +126,10 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon
 
-      # ===== ۱۰. تغییر نام APK =====
+      # ===== ۱۱. تغییر نام APK =====
       - name: 📝 تغییر نام APK
         run: |
-          APP="${{ github.event.inputs.app_slug }}"
+          APP="${{ steps.detect.outputs.app_slug }}"
           APK=$(find template/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -z "$APK" ]; then
             echo "❌ APK پیدا نشد"
@@ -115,28 +139,32 @@ jobs:
           cp "$APK" "output/${APP}.apk"
           echo "✅ APK آماده: ${APP}.apk"
 
-      # ===== ۱۱. آپلود APK به عنوان Artifact =====
+      # ===== ۱۲. آپلود APK =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
-          name: APK-${{ github.event.inputs.app_slug }}
+          name: APK-${{ steps.detect.outputs.app_slug }}
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۲. پاک کردن keystore موقت =====
+      # ===== ۱۳. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: |
           rm -rf template/keystore
           echo "✅ Keystore موقت پاک شد"
 
-      # ===== ۱۳. خلاصه =====
+      # ===== ۱۴. خلاصه =====
       - name: ✅ خلاصه
         run: |
           echo "=========================================="
           echo "🎉 Build با موفقیت انجام شد"
           echo "=========================================="
-          echo "اپ: ${{ github.event.inputs.app_slug }}"
+          echo "اپ: ${{ steps.detect.outputs.app_slug }}"
+          echo "اسم: ${{ steps.cfg.outputs.app_name }}"
           echo "نسخه: ${{ steps.cfg.outputs.ver_name }}"
           echo "پکیج: ${{ steps.cfg.outputs.package }}"
+          echo "=========================================="
+          echo "📥 دانلود APK:"
+          echo "برو به Actions → آخرین Build → Artifacts"
           echo "=========================================="
