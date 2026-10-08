@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -68,12 +67,6 @@ dependencies {
     // ===== شبکه =====
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    // ===== JSON =====
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-
     // ===== تصاویر =====
     implementation("io.coil-kt:coil-compose:2.7.0")
-
-    // ===== Font =====
-    implementation("androidx.compose.ui:ui-text-google-fonts")
 }
