@@ -51,7 +51,7 @@
         "duration": 2000,
         "bg_type": "gradient",
         "bg_color_1": "#0D1B2E",
-        "bg_color_2": "#1B2A4A",
+        "bg_color_2": "#00ff00",
         "bg_image": "",
         "logo_size": 180,
         "logo_anim": "pulse",
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 14:12:51",
+        "saved_at": "2026-10-08 14:17:45",
         "saved_by": "admin"
     }
-    }
+}
