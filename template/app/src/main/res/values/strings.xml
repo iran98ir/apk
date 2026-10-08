@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =========================================================
+     strings.xml  —  متن‌های پیش‌فرض اپ
+     مسیر: template/app/src/main/res/values/strings.xml
+     =========================================================
+     📌 اینا پیش‌فرض هستن
+     📌 متن‌های واقعی از config.json خونده میشن
+     ========================================================= -->
+<resources>
+
+    <!-- ===== اپ ===== -->
+    <string name="app_name">اپلیکیشن</string>
+
+    <!-- ===== دکمه‌ها ===== -->
+    <string name="btn_next">بعدی</string>
+    <string name="btn_prev">قبلی</string>
+    <string name="btn_skip">رد کردن</string>
+    <string name="btn_start">شروع کن</string>
+    <string name="btn_retry">تلاش مجدد</string>
+    <string name="btn_home">بازگشت به خانه</string>
+    <string name="btn_enter">ورود</string>
+    <string name="btn_recheck">بررسی مجدد</string>
+    <string name="btn_confirm">تأیید</string>
+    <string name="btn_cancel">انصراف</string>
+
+    <!-- ===== خطاها ===== -->
+    <string name="err_offline_title">اتصال اینترنت قطع است</string>
+    <string name="err_offline_text">لطفاً اینترنت خود را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="err_server_title">سرور در دسترس نیست</string>
+    <string name="err_not_found_title">صفحه پیدا نشد</string>
+    <string name="err_forbidden_title">دسترسی مسدود است</string>
+    <string name="err_timeout_title">زمان پاسخ سرور تمام شد</string>
+    <string name="err_dns_title">سرور در دسترس نیست</string>
+    <string name="err_ssl_title">اتصال امن برقرار نشد</string>
+    <string name="err_connection_title">اتصال برقرار نشد</string>
+    <string name="err_unknown_title">خطای نامشخص</string>
+
+    <!-- ===== VPN ===== -->
+    <string name="vpn_on_title">فیلترشکن شما روشن است</string>
+    <string name="vpn_on_text">برای استفاده‌ی کامل از اپ، لطفاً فیلترشکن خود را خاموش کنید.</string>
+    <string name="vpn_off_title">آماده‌ی شروع هستی</string>
+    <string name="vpn_off_text">لطفاً از خاموش بودن فیلترشکن مطمئن شو و وارد شو.</string>
+
+    <!-- ===== خروج ===== -->
+    <string name="exit_title">خروج از اپ</string>
+    <string name="exit_text">مطمئنی میخوای از اپ خارج بشی؟</string>
+    <string name="exit_confirm">بله، خروج</string>
+    <string name="exit_cancel">نه، بمون</string>
+
+</resources>
