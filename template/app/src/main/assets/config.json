@@ -1,0 +1,16 @@
+{
+  "branding": {
+    "app_name": "اپ من",
+    "package_name": "ir.rosha.app",
+    "version_code": 1,
+    "version_name": "1.0.0"
+  },
+  "colors": {
+    "color_primary": "#E8A33D",
+    "color_background": "#0D1B2E",
+    "color_text": "#FFFFFF"
+  },
+  "webview": {
+    "url": "https://example.com"
+  }
+}
