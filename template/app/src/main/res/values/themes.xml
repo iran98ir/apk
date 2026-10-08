@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =========================================================
+     themes.xml  —  تم‌های اپ
+     مسیر: template/app/src/main/res/values/themes.xml
+     ========================================================= -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ===== تم اصلی ===== -->
+    <style name="Theme.Rosha" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+    </style>
+
+    <!-- ===== اسپلش ===== -->
+    <style name="Theme.Rosha.Splash" parent="Theme.Rosha">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+</resources>
