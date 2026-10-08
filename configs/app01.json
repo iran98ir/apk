@@ -277,7 +277,7 @@
         "text": "",
         "text_color": "#B8B0A0",
         "bg_color": "#1B2A4A",
-        "border_color": "#E8A33D",
+        "border_color": "#0000ff",
         "overlay_color": "rgba(0,0,0,0.6)",
         "btn_confirm_text": "بله، خروج",
         "btn_confirm_bg": "#C73E3E",
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 10:47:31",
+        "saved_at": "2026-10-08 10:55:44",
         "saved_by": "admin"
     }
 }
