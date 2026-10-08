@@ -2,8 +2,8 @@
    SplashActivity.kt — صفحه اسپلش
    مسیر: template/app/src/main/java/ir/rosha/app/SplashActivity.kt
    =========================================================
-   📌 فقط از config.json دستور می‌گیره
-   📌 اگه کلید نبود → اپ نمی‌سازه
+   📌 فقط از config.json می‌خونه
+   📌 هیچ پیش‌فرضی نداره
    ========================================================= */
 
 package ir.rosha.app
@@ -11,7 +11,6 @@ package ir.rosha.app
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
@@ -41,19 +40,7 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ===== چک اعتبار config =====
-        val missing = AppConfig.validateSplash()
-        if (missing.isNotEmpty()) {
-            Toast.makeText(
-                this,
-                "❌ خطا در config.json:\n" + missing.joinToString("\n"),
-                Toast.LENGTH_LONG
-            ).show()
-            finish()
-            return
-        }
-
-        // ===== خوندن از config (بدون پیش‌فرض) =====
+        // ===== از config.json =====
         val enabled       = AppConfig.bool("splash", "enabled")
         val duration      = AppConfig.int("splash", "duration")
         val title         = AppConfig.str("splash", "title")
