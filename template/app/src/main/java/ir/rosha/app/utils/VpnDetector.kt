@@ -43,18 +43,12 @@ object VpnDetector {
     )
 
     fun detect(context: Context): VpnState {
-
-        // ===== ۱. VPN نیتیو =====
         if (isNativeVpnOn(context)) {
             return VpnState.ON
         }
-
-        // ===== ۲. اپ VPN نصب =====
         if (hasVpnAppInstalled(context)) {
             return VpnState.UNKNOWN
         }
-
-        // ===== ۳. خاموش =====
         return VpnState.OFF
     }
 
