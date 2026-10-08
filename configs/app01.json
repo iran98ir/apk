@@ -281,7 +281,7 @@
         "overlay_color": "rgba(0,0,0,0.6)",
         "btn_confirm_text": "بله، خروج v77",
         "btn_confirm_bg": "#00ff00",
-        "btn_confirm_color": "#0000ff",
+        "btn_confirm_color": "#ff0000",
         "btn_cancel_text": "نه، بمون",
         "btn_cancel_bg": "#ff0000",
         "btn_cancel_color": "#FFFFFF",
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-09 01:18:34",
+        "saved_at": "2026-10-09 01:21:54",
         "saved_by": "admin"
     }
 }
