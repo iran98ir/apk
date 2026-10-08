@@ -121,6 +121,7 @@ jobs:
             -keypass "rosha${{ github.run_id }}" \
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
           echo "✅ Keystore ساخته شد"
+          ls -la template/app/keystore/
 
       # ===== ۱۰. دسترسی اجرا =====
       - name: 🔧 دسترسی اجرا
@@ -130,8 +131,11 @@ jobs:
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
+          KEYSTORE_PATH="$PWD/app/keystore/temp.jks"
+          echo "🔑 Keystore path: $KEYSTORE_PATH"
+          ls -la "$KEYSTORE_PATH"
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=keystore/temp.jks \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="rosha${{ github.run_id }}" \
             -Pandroid.injected.signing.key.alias=tempkey \
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
@@ -141,14 +145,18 @@ jobs:
       - name: 📝 تغییر نام APK
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
+          OUT_NAME=$(jq -r '.advanced.output_name // ""' "configs/$APP.json")
+          if [ -z "$OUT_NAME" ] || [ "$OUT_NAME" == "null" ]; then
+            OUT_NAME="$APP"
+          fi
           APK=$(find template/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -z "$APK" ]; then
             echo "❌ APK پیدا نشد"
             exit 1
           fi
           mkdir -p output
-          cp "$APK" "output/${APP}.apk"
-          echo "✅ APK: ${APP}.apk"
+          cp "$APK" "output/${OUT_NAME}.apk"
+          echo "✅ APK: ${OUT_NAME}.apk"
 
       # ===== ۱۳. آپلود =====
       - name: 📤 آپلود APK
