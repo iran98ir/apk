@@ -1,10 +1,8 @@
 /* =========================================================
-   ErrorActivity.kt  —  صفحات خطا
+   ErrorActivity.kt — صفحات خطا
    مسیر: template/app/src/main/java/ir/rosha/app/ErrorActivity.kt
    =========================================================
-   📌 ۹ نوع خطا با ظاهر زیبا
-   📌 کاربر هرگز خطای خام مرورگر رو نمیبینه
-   📌 دکمه‌ی تلاش مجدد + بازگشت به خانه
+   📌 همه چیز از config.json خونده می‌شه
    ========================================================= */
 
 package ir.rosha.app
@@ -34,16 +32,43 @@ class ErrorActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ===== نوع خطا از intent =====
         val errorType = intent.getStringExtra("error_type") ?: "unk"
+
+        // ===== از config =====
+        val enabled = AppConfig.bool("errors", "enabled", true)
+
+        if (!enabled) {
+            startActivity(Intent(this, WebViewActivity::class.java))
+            finish()
+            return
+        }
+
+        val showRetry = AppConfig.bool("errors", "show_retry", true)
+        val showHome = AppConfig.bool("errors", "show_home", true)
+        val retryText = AppConfig.str("errors", "retry_text", "🔄 تلاش مجدد")
+        val retryBg = AppConfig.color("errors", "retry_bg", "#E8A33D")
+        val retryColor = AppConfig.color("errors", "retry_color", "#FFFFFF")
+        val homeText = AppConfig.str("errors", "home_text", "🏠 بازگشت به خانه")
+        val homeColor = AppConfig.color("errors", "home_color", "#B8B0A0")
+        val homeBorder = AppConfig.color("errors", "home_border", "#B8B0A0")
+
+        val data = buildErrorData(errorType)
 
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = Color(0xFF0D1B2E)
+                color = Color(data.bg)
             ) {
                 ErrorScreen(
-                    errorType = errorType,
+                    data = data,
+                    showRetry = showRetry,
+                    showHome = showHome,
+                    retryText = retryText,
+                    retryBg = retryBg,
+                    retryColor = retryColor,
+                    homeText = homeText,
+                    homeColor = homeColor,
+                    homeBorder = homeBorder,
                     onRetry = {
                         startActivity(Intent(this, WebViewActivity::class.java))
                         finish()
@@ -56,24 +81,58 @@ class ErrorActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun buildErrorData(type: String): ErrorData {
+        val prefix = when (type) {
+            "offline" -> "offline"
+            "server" -> "server"
+            "nf" -> "nf"
+            "fb" -> "fb"
+            "to" -> "to"
+            "dns" -> "dns"
+            "ssl" -> "ssl"
+            "conn" -> "conn"
+            else -> "unk"
+        }
+        return ErrorData(
+            icon = AppConfig.str("errors", "${prefix}_icon", "⚠️"),
+            title = AppConfig.str("errors", "${prefix}_title", "خطای نامشخص"),
+            text = AppConfig.str("errors", "${prefix}_text", ""),
+            color = AppConfig.color("errors", "${prefix}_color", "#E8A33D"),
+            bg = AppConfig.color("errors", "${prefix}_bg", "#0D1B2E")
+        )
+    }
 }
+
+private data class ErrorData(
+    val icon: String,
+    val title: String,
+    val text: String,
+    val color: Int,
+    val bg: Int
+)
 
 @Composable
 private fun ErrorScreen(
-    errorType: String,
+    data: ErrorData,
+    showRetry: Boolean,
+    showHome: Boolean,
+    retryText: String,
+    retryBg: Int,
+    retryColor: Int,
+    homeText: String,
+    homeColor: Int,
+    homeBorder: Int,
     onRetry: () -> Unit,
     onHome: () -> Unit
 ) {
-
-    // ===== اطلاعات هر خطا =====
-    val data = getErrorData(errorType)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF0D1B2E), Color(0xFF1B2A4A))
+                    colors = listOf(Color(data.bg), Color(0xFF1B2A4A))
                 )
             )
     ) {
@@ -91,7 +150,7 @@ private fun ErrorScreen(
                 modifier = Modifier
                     .size(140.dp)
                     .clip(CircleShape)
-                    .background(data.color.copy(alpha = 0.15f)),
+                    .background(Color(data.color).copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -102,10 +161,10 @@ private fun ErrorScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ===== تیتر =====
+            // ===== عنوان =====
             Text(
                 text = data.title,
-                color = data.color,
+                color = Color(data.color),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
@@ -115,124 +174,60 @@ private fun ErrorScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // ===== متن =====
-            Text(
-                text = data.text,
-                color = Color(0xFFB8B0A0),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                lineHeight = 24.sp
-            )
+            if (data.text.isNotEmpty()) {
+                Text(
+                    text = data.text,
+                    color = Color(0xFFB8B0A0),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ===== دکمه‌ی تلاش مجدد =====
-            Button(
-                onClick = onRetry,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE8A33D),
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = "🔄 تلاش مجدد",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Black
-                )
+            // ===== دکمه تلاش مجدد =====
+            if (showRetry) {
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(retryBg),
+                        contentColor = Color(retryColor)
+                    )
+                ) {
+                    Text(
+                        text = retryText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // ===== دکمه‌ی بازگشت به خانه =====
-            OutlinedButton(
-                onClick = onHome,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFFB8B0A0)
-                )
-            ) {
-                Text(
-                    text = "🏠 بازگشت به خانه",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            // ===== دکمه خانه =====
+            if (showHome) {
+                OutlinedButton(
+                    onClick = onHome,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(homeColor)
+                    )
+                ) {
+                    Text(
+                        text = homeText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
-    }
-}
-
-/* =========================================================
-   داده‌ی هر خطا
-   ========================================================= */
-private data class ErrorData(
-    val icon: String,
-    val title: String,
-    val text: String,
-    val color: Color
-)
-
-private fun getErrorData(type: String): ErrorData {
-    return when (type) {
-        "offline" -> ErrorData(
-            icon = "📡",
-            title = "اتصال اینترنت قطع است",
-            text = "لطفاً اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
-            color = Color(0xFFC73E3E)
-        )
-        "server" -> ErrorData(
-            icon = "🛠",
-            title = "سرور در دسترس نیست",
-            text = "مشکلی از سمت سرور پیش آمده. لطفاً چند لحظه بعد دوباره امتحان کنید.",
-            color = Color(0xFFE8A33D)
-        )
-        "nf" -> ErrorData(
-            icon = "🔍",
-            title = "صفحه پیدا نشد",
-            text = "متأسفانه صفحه‌ای که دنبالش بودید وجود ندارد.",
-            color = Color(0xFF5B7FFF)
-        )
-        "fb" -> ErrorData(
-            icon = "🚫",
-            title = "دسترسی مسدود است",
-            text = "شما به این بخش دسترسی ندارید.",
-            color = Color(0xFFC73E3E)
-        )
-        "to" -> ErrorData(
-            icon = "⏱",
-            title = "زمان پاسخ سرور تمام شد",
-            text = "اتصال شما کند است. لطفاً دوباره تلاش کنید.",
-            color = Color(0xFFE8A33D)
-        )
-        "dns" -> ErrorData(
-            icon = "🌍",
-            title = "سرور در دسترس نیست",
-            text = "لطفاً اتصال اینترنت خود را بررسی کنید.",
-            color = Color(0xFFE8A33D)
-        )
-        "ssl" -> ErrorData(
-            icon = "🔒",
-            title = "اتصال امن برقرار نشد",
-            text = "مشکلی در امنیت اتصال وجود دارد. لطفاً دوباره تلاش کنید.",
-            color = Color(0xFFC73E3E)
-        )
-        "conn" -> ErrorData(
-            icon = "🔌",
-            title = "اتصال برقرار نشد",
-            text = "لطفاً اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
-            color = Color(0xFFC73E3E)
-        )
-        else -> ErrorData(
-            icon = "⚠️",
-            title = "خطای نامشخص",
-            text = "مشکلی پیش آمده. لطفاً دوباره تلاش کنید.",
-            color = Color(0xFF7A6A60)
-        )
     }
 }
