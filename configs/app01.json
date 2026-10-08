@@ -19,7 +19,7 @@
         "color_text_secondary": "#ff00ff",
         "color_button": "#000000",
         "color_button_text": "#ffff00",
-        "color_accent": "#000000",
+        "color_accent": "#ffffff",
         "bg_type": "solid",
         "bg_color_1": "#0D1B2E",
         "bg_color_2": "#1B2A4A",
@@ -32,18 +32,18 @@
         "font_family": "IRANSans",
         "font_weight": 700,
         "font_size_base": 19,
-        "title_size": 24,
+        "title_size": 26,
         "title_weight": 800,
-        "subtitle_size": 18,
+        "subtitle_size": 34,
         "subtitle_weight": 600,
         "body_size": 34,
         "body_weight": 700,
-        "button_size": 13,
+        "button_size": 36,
         "button_weight": 800,
         "anim_title": "fadeUp",
         "anim_text": "fadeUp",
         "anim_btn": "scale",
-        "anim_duration": 500,
+        "anim_duration": 1000,
         "anim_delay": 100
     },
     "splash": {
@@ -59,11 +59,11 @@
         "title_size": 28,
         "title_color": "#ff00ff",
         "title_anim": "fadeUp",
-        "subtitle": "",
+        "subtitle": "Cjhmxmgxmgx chlykdk",
         "subtitle_size": 16,
         "subtitle_color": "#B8B0A0",
         "subtitle_anim": "fadeUp",
-        "loader_type": "dots",
+        "loader_type": "bar",
         "loader_color": "#E8A33D",
         "show_loader": 1
     },
@@ -217,7 +217,7 @@
             "icon": "🔍",
             "title": "صفحه پیدا نشد",
             "text": "متأسفانه صفحه‌ای که دنبالش بودید وجود ندارد.",
-            "color": "#5B7FFF",
+            "color": "#ff0000",
             "bg": "#0D1B2E"
         },
         "fb": {
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-09 01:37:23",
+        "saved_at": "2026-10-09 02:09:02",
         "saved_by": "admin"
     }
 }
