@@ -283,7 +283,7 @@
         "btn_confirm_bg": "#ffff00",
         "btn_confirm_color": "#FFFFFF",
         "btn_cancel_text": "نه، بمون",
-        "btn_cancel_bg": "#E8A33D",
+        "btn_cancel_bg": "#0000ff",
         "btn_cancel_color": "#FFFFFF",
         "btn_layout": "horizontal"
     },
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 11:23:02",
+        "saved_at": "2026-10-08 11:26:37",
         "saved_by": "admin"
     }
-}
+    }
