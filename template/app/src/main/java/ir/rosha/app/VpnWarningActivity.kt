@@ -2,7 +2,8 @@
    VpnWarningActivity.kt — هشدار فیلترشکن
    مسیر: template/app/src/main/java/ir/rosha/app/VpnWarningActivity.kt
    =========================================================
-   📌 همه چیز از config.json خونده می‌شه
+   📌 فقط از config.json می‌خونه
+   📌 هیچ پیش‌فرضی نداره
    ========================================================= */
 
 package ir.rosha.app
@@ -33,10 +34,9 @@ class VpnWarningActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ===== از config =====
-        val enabled = AppConfig.bool("vpn", "enabled", false)
+        // ===== از config.json =====
+        val enabled = AppConfig.bool("vpn", "enabled")
 
-        // اگه خاموش بود → مستقیم WebView
         if (!enabled) {
             startActivity(Intent(this, WebViewActivity::class.java))
             finish()
@@ -45,44 +45,42 @@ class VpnWarningActivity : ComponentActivity() {
 
         val vpnStatus = VpnDetector.detect(this)
 
-        val topTitle = AppConfig.str("vpn", "top_title", "توجه مهم")
-        val topSubtitle = AppConfig.str("vpn", "top_subtitle", "")
-        val footnote = AppConfig.str("vpn", "footnote", "")
-        val showRecheck = AppConfig.bool("vpn", "show_recheck", true)
-
-        // ===== recheck =====
-        val recheckText = AppConfig.str("vpn", "recheck_text", "🔄 بررسی مجدد")
-        val recheckBg = AppConfig.str("vpn", "recheck_bg", "transparent")
-        val recheckBorder = AppConfig.color("vpn", "recheck_border", "#B8B0A0")
-        val recheckColor = AppConfig.color("vpn", "recheck_color", "#B8B0A0")
+        val topTitle        = AppConfig.str("vpn", "top_title")
+        val topSubtitle     = AppConfig.str("vpn", "top_subtitle")
+        val footnote        = AppConfig.str("vpn", "footnote")
+        val showRecheck     = AppConfig.bool("vpn", "show_recheck")
+        val recheckText     = AppConfig.str("vpn", "recheck_text")
+        val recheckBg       = AppConfig.str("vpn", "recheck_bg")
+        val recheckBorder   = AppConfig.color("vpn", "recheck_border")
+        val recheckColor    = AppConfig.color("vpn", "recheck_color")
 
         // ===== state_on =====
-        val onIcon = AppConfig.str("vpn", "state_on_icon", "⚠️")
-        val onTitle = AppConfig.str("vpn", "state_on_title", "فیلترشکن شما روشن است")
-        val onText = AppConfig.str("vpn", "state_on_text", "")
-        val onColor = AppConfig.color("vpn", "state_on_color", "#C73E3E")
-        val onBg = AppConfig.color("vpn", "state_on_bg", "#5B1A1D")
-        val onBtn = AppConfig.str("vpn", "state_on_btn", "ورود")
+        val onIcon  = AppConfig.str("vpn.state_on", "icon")
+        val onTitle = AppConfig.str("vpn.state_on", "title")
+        val onText  = AppConfig.str("vpn.state_on", "text")
+        val onColor = AppConfig.color("vpn.state_on", "color")
+        val onBg    = AppConfig.color("vpn.state_on", "bg")
+        val onBtn   = AppConfig.str("vpn.state_on", "btn")
 
         // ===== state_off =====
-        val offIcon = AppConfig.str("vpn", "state_off_icon", "✅")
-        val offTitle = AppConfig.str("vpn", "state_off_title", "آماده‌ی شروع هستی")
-        val offText = AppConfig.str("vpn", "state_off_text", "")
-        val offColor = AppConfig.color("vpn", "state_off_color", "#2D7A5F")
-        val offBg = AppConfig.color("vpn", "state_off_bg", "#0D1B2E")
-        val offBtn = AppConfig.str("vpn", "state_off_btn", "ورود")
+        val offIcon  = AppConfig.str("vpn.state_off", "icon")
+        val offTitle = AppConfig.str("vpn.state_off", "title")
+        val offText  = AppConfig.str("vpn.state_off", "text")
+        val offColor = AppConfig.color("vpn.state_off", "color")
+        val offBg    = AppConfig.color("vpn.state_off", "bg")
+        val offBtn   = AppConfig.str("vpn.state_off", "btn")
 
         // ===== state_unknown =====
-        val unkIcon = AppConfig.str("vpn", "state_unknown_icon", "🔒")
-        val unkTitle = AppConfig.str("vpn", "state_unknown_title", "برای شروع آماده‌ای")
-        val unkText = AppConfig.str("vpn", "state_unknown_text", "")
-        val unkColor = AppConfig.color("vpn", "state_unknown_color", "#E8A33D")
-        val unkBg = AppConfig.color("vpn", "state_unknown_bg", "#0D1B2E")
-        val unkBtn = AppConfig.str("vpn", "state_unknown_btn", "ورود")
+        val unkIcon  = AppConfig.str("vpn.state_unknown", "icon")
+        val unkTitle = AppConfig.str("vpn.state_unknown", "title")
+        val unkText  = AppConfig.str("vpn.state_unknown", "text")
+        val unkColor = AppConfig.color("vpn.state_unknown", "color")
+        val unkBg    = AppConfig.color("vpn.state_unknown", "bg")
+        val unkBtn   = AppConfig.str("vpn.state_unknown", "btn")
 
         val data = when (vpnStatus) {
-            VpnState.ON -> VpnScreenData(onIcon, onTitle, onText, onColor, onBg, onBtn)
-            VpnState.OFF -> VpnScreenData(offIcon, offTitle, offText, offColor, offBg, offBtn)
+            VpnState.ON      -> VpnScreenData(onIcon, onTitle, onText, onColor, onBg, onBtn)
+            VpnState.OFF     -> VpnScreenData(offIcon, offTitle, offText, offColor, offBg, offBtn)
             VpnState.UNKNOWN -> VpnScreenData(unkIcon, unkTitle, unkText, unkColor, unkBg, unkBtn)
         }
 
@@ -92,16 +90,17 @@ class VpnWarningActivity : ComponentActivity() {
                 color = Color(data.bg)
             ) {
                 VpnWarningScreen(
-                    data = data,
-                    topTitle = topTitle,
-                    topSubtitle = topSubtitle,
-                    footnote = footnote,
-                    showRecheck = showRecheck,
-                    recheckText = recheckText,
+                    data          = data,
+                    topTitle      = topTitle,
+                    topSubtitle   = topSubtitle,
+                    footnote      = footnote,
+                    showRecheck   = showRecheck,
+                    recheckText   = recheckText,
+                    recheckBg     = recheckBg,
                     recheckBorder = recheckBorder,
-                    recheckColor = recheckColor,
-                    onRecheck = { recreate() },
-                    onEnter = {
+                    recheckColor  = recheckColor,
+                    onRecheck     = { recreate() },
+                    onEnter       = {
                         startActivity(Intent(this, WebViewActivity::class.java))
                         finish()
                     }
@@ -132,12 +131,12 @@ private fun VpnWarningScreen(
     footnote: String,
     showRecheck: Boolean,
     recheckText: String,
+    recheckBg: String,
     recheckBorder: Int,
     recheckColor: Int,
     onRecheck: () -> Unit,
     onEnter: () -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -147,7 +146,6 @@ private fun VpnWarningScreen(
                 )
             )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -155,8 +153,6 @@ private fun VpnWarningScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
-            // ===== عنوان بالا =====
             if (topTitle.isNotEmpty()) {
                 Text(
                     text = topTitle,
@@ -179,7 +175,6 @@ private fun VpnWarningScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // ===== آیکون =====
             Box(
                 modifier = Modifier
                     .size(140.dp)
@@ -195,7 +190,6 @@ private fun VpnWarningScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ===== عنوان =====
             Text(
                 text = data.title,
                 color = Color(data.color),
@@ -207,7 +201,6 @@ private fun VpnWarningScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== متن =====
             if (data.text.isNotEmpty()) {
                 Text(
                     text = data.text,
@@ -221,7 +214,6 @@ private fun VpnWarningScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ===== دکمه ورود =====
             Button(
                 onClick = onEnter,
                 modifier = Modifier
@@ -240,7 +232,6 @@ private fun VpnWarningScreen(
                 )
             }
 
-            // ===== دکمه بررسی مجدد =====
             if (showRecheck) {
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(
@@ -261,7 +252,6 @@ private fun VpnWarningScreen(
                 }
             }
 
-            // ===== متن پایین =====
             if (footnote.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
