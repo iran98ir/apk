@@ -1,9 +1,9 @@
 {
     "branding": {
-        "app_name": "اپ جدید ۱6666",
-        "app_name_en": "hdjddh",
-        "package_name": "ir.rosha.app1",
-        "version_code": 1,
+        "app_name": "آرزو",
+        "app_name_en": "arezo",
+        "package_name": "ir.arezo",
+        "version_code": 2,
         "version_name": "1.0.0",
         "is_new_app": 1,
         "icon_48": "/panel/app/build/uploads/icons/icon_48_20261008_141244_d2c38f.png",
@@ -13,14 +13,14 @@
         "splash_logo": "/panel/app/build/uploads/logos/splash_logo_20261008_141244_4947d0.png"
     },
     "colors": {
-        "color_primary": "#ffff00",
-        "color_background": "#00ffff",
-        "color_text": "#FFFFFF",
-        "color_text_secondary": "#000000",
-        "color_button": "#E8A33D",
-        "color_button_text": "#FFFFFF",
-        "color_accent": "#C73E3E",
-        "bg_type": "image",
+        "color_primary": "#0000ff",
+        "color_background": "#ff0000",
+        "color_text": "#00ff00",
+        "color_text_secondary": "#ff00ff",
+        "color_button": "#000000",
+        "color_button_text": "#ffff00",
+        "color_accent": "#000000",
+        "bg_type": "solid",
         "bg_color_1": "#0D1B2E",
         "bg_color_2": "#1B2A4A",
         "bg_gradient_angle": 180,
@@ -30,14 +30,14 @@
     },
     "fonts": {
         "font_family": "IRANSans",
-        "font_weight": 400,
-        "font_size_base": 16,
+        "font_weight": 700,
+        "font_size_base": 19,
         "title_size": 24,
         "title_weight": 800,
         "subtitle_size": 18,
         "subtitle_weight": 600,
-        "body_size": 14,
-        "body_weight": 400,
+        "body_size": 43,
+        "body_weight": 700,
         "button_size": 13,
         "button_weight": 800,
         "anim_title": "fadeUp",
@@ -47,17 +47,17 @@
         "anim_delay": 100
     },
     "splash": {
-        "enabled": 0,
-        "duration": 2000,
+        "enabled": 1,
+        "duration": 2700,
         "bg_type": "gradient",
         "bg_color_1": "#0D1B2E",
         "bg_color_2": "#00ff00",
         "bg_image": "",
         "logo_size": 180,
         "logo_anim": "pulse",
-        "title": "Hhhhh",
+        "title": "Arezoooooooooooooooo",
         "title_size": 28,
-        "title_color": "#E8A33D",
+        "title_color": "#ff00ff",
         "title_anim": "fadeUp",
         "subtitle": "",
         "subtitle_size": 16,
@@ -109,12 +109,12 @@
         "s3_text_color": "#B8B0A0"
     },
     "vpn": {
-        "enabled": 0,
+        "enabled": 1,
         "top_title": "",
         "top_subtitle": "",
         "default_bg": "#5B1A1D",
         "footnote": "",
-        "show_recheck": 0,
+        "show_recheck": 1,
         "state_on": {
             "icon": "🙋‍♀️",
             "title": "Uuuuu",
@@ -169,9 +169,9 @@
         "pull_release": "",
         "pull_loading": "",
         "pull_color": "#E8A33D",
-        "back_button": 0,
-        "back_exit_msg": "",
-        "back_double": 0,
+        "back_button": 1,
+        "back_exit_msg": "Ttttttt",
+        "back_double": 1,
         "external_links": "inapp",
         "mail_links": "external",
         "tel_links": "external",
@@ -180,14 +180,14 @@
         "instagram_links": "external",
         "timeout": 30000,
         "retry_count": 2,
-        "cache_enabled": 0,
+        "cache_enabled": 1,
         "cache_mode": "default",
         "safe_browsing": 0,
         "block_ads": 0,
         "show_splash_on_webview": 0
     },
     "errors": {
-        "enabled": 0,
+        "enabled": 1,
         "show_retry": 0,
         "show_home": 0,
         "auto_retry": 0,
@@ -204,7 +204,7 @@
             "title": "اتصال اینترنت قطع است",
             "text": "لطفاً اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
             "color": "#C73E3E",
-            "bg": "#0D1B2E"
+            "bg": "#0000ff"
         },
         "server": {
             "icon": "🛠",
@@ -260,14 +260,14 @@
             "title": "خطای نامشخص",
             "text": "مشکلی پیش آمده. لطفاً دوباره تلاش کنید.",
             "color": "#7A6A60",
-            "bg": "#0D1B2E"
+            "bg": "#ff00ff"
         }
     },
     "exit": {
-        "enabled": 0,
-        "double_back": 0,
+        "enabled": 1,
+        "double_back": 1,
         "double_back_msg": "",
-        "show_icon": 0,
+        "show_icon": 1,
         "dialog_type": "classic",
         "radius": 16,
         "border_width": 0,
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 22:33:26",
+        "saved_at": "2026-10-08 22:58:22",
         "saved_by": "admin"
     }
 }
