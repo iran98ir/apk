@@ -1,6 +1,5 @@
 # =========================================================
 # build.yml — GitHub Actions برای ساخت APK
-# مسیر: .github/workflows/build.yml
 # =========================================================
 
 name: Build APK
@@ -70,18 +69,7 @@ jobs:
           chmod +x template/gradlew
           echo "✅ wrapper.jar دانلود شد"
 
-      # ===== ۶. کش Gradle =====
-      - name: ⚡ کش Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # ===== ۷. کپی تنظیمات =====
+      # ===== ۶. کپی تنظیمات =====
       - name: 📋 کپی تنظیمات اپ
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -93,7 +81,7 @@ jobs:
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ تنظیمات $APP کپی شد"
 
-      # ===== ۸. خواندن اطلاعات =====
+      # ===== ۷. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
@@ -103,7 +91,7 @@ jobs:
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
 
-      # ===== ۹. دانلود آیکون‌ها از پنل (با پروکسی) =====
+      # ===== ۸. دانلود آیکون‌ها از پنل =====
       - name: 🎨 دانلود آیکون‌ها از پنل
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -132,26 +120,22 @@ jobs:
 
             echo "🔽 $name"
 
-            # ===== تلاش ۱: مستقیم =====
             if curl -f -L --max-time 15 -o "$output" "$url" 2>/dev/null; then
               echo "  ✅ مستقیم"
               return 0
             fi
 
-            # ===== تلاش ۲: allorigins =====
             local encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$url")
             if curl -f -L --max-time 30 -o "$output" "${PROXY}${encoded}" 2>/dev/null; then
-              echo "  ✅ همه‌گیرها (allorigins)"
+              echo "  ✅ allorigins"
               return 0
             fi
 
-            # ===== تلاش ۳: corsproxy.io =====
             if curl -f -L --max-time 30 -o "$output" "${PROXY2}${encoded}" 2>/dev/null; then
               echo "  ✅ corsproxy"
               return 0
             fi
 
-            # ===== تلاش ۴: weserv (تصویر) =====
             if curl -f -L --max-time 30 -o "$output" "https://images.weserv.nl/?url=${url#https://}" 2>/dev/null; then
               echo "  ✅ weserv"
               return 0
@@ -183,7 +167,7 @@ jobs:
             file "$f"
           done
 
-      # ===== ۱۰. Keystore موقت =====
+      # ===== ۹. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
           mkdir -p template/app/keystore
@@ -198,11 +182,11 @@ jobs:
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
           echo "✅ Keystore ساخته شد"
 
-      # ===== ۱۱. دسترسی اجرا =====
+      # ===== ۱۰. دسترسی اجرا =====
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
-      # ===== ۱۲. Build APK =====
+      # ===== ۱۱. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
@@ -214,7 +198,7 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace
 
-      # ===== ۱۳. تغییر نام =====
+      # ===== ۱۲. تغییر نام =====
       - name: 📝 تغییر نام APK
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -231,7 +215,7 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
-      # ===== ۱۴. آپلود APK =====
+      # ===== ۱۳. آپلود APK =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -239,12 +223,12 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۵. پاک کردن keystore =====
+      # ===== ۱۴. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
 
-      # ===== ۱۶. خلاصه =====
+      # ===== ۱۵. خلاصه =====
       - name: ✅ خلاصه
         run: |
           echo "🎉 Build موفق"
