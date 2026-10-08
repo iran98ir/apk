@@ -56,6 +56,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.foundation:foundation")        // ← این اضافه شد
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
@@ -66,6 +67,9 @@ dependencies {
 
     // ===== شبکه =====
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // ===== JSON - Gson =====
+    implementation("com.google.code.gson:gson:2.11.0")              // ← این اضافه شد
 
     // ===== تصاویر =====
     implementation("io.coil-kt:coil-compose:2.7.0")
