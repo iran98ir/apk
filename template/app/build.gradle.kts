@@ -44,22 +44,40 @@ android {
 }
 
 dependencies {
-    // ===== پایه =====
+    // ===== پایه Android =====
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
-    // ===== Compose =====
+    // ===== Compose BOM =====
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+
+    // ===== Compose UI =====
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-text-google-fonts")
+
+    // ===== Compose Material =====
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.foundation:foundation")        // ← این اضافه شد
+
+    // ===== Compose Foundation & Animation =====
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.foundation:foundation-layout")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.animation:animation-graphics")
+    implementation("androidx.compose.runtime:runtime")
+
+    // ===== Activity + Lifecycle =====
     implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+
+    // ===== Navigation =====
     implementation("androidx.navigation:navigation-compose:2.8.1")
 
     // ===== WebView =====
@@ -68,9 +86,11 @@ dependencies {
     // ===== شبکه =====
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    // ===== JSON - Gson =====
-    implementation("com.google.code.gson:gson:2.11.0")              // ← این اضافه شد
+    // ===== JSON (Gson) =====
+    implementation("com.google.code.gson:gson:2.11.0")
 
     // ===== تصاویر =====
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0")
 }
