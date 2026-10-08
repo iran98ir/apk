@@ -1,5 +1,5 @@
 /* =========================================================
-   RoshaApplication.kt  —  کلاس اصلی Application
+   RoshaApplication.kt — کلاس Application
    مسیر: template/app/src/main/java/ir/rosha/app/RoshaApplication.kt
    ========================================================= */
 
@@ -14,13 +14,12 @@ class RoshaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // ===== ذخیره Context برای استفاده در AppConfig =====
         instance = this
 
-        // ===== لود تنظیمات از config.json =====
+        // ===== لود تنظیمات =====
         AppConfig.init(this)
 
-        // ===== غیرفعال کردن حالت شب (طبق درخواست) =====
+        // ===== غیرفعال کردن دارک مود =====
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 
