@@ -2,7 +2,8 @@
    ErrorActivity.kt — صفحات خطا
    مسیر: template/app/src/main/java/ir/rosha/app/ErrorActivity.kt
    =========================================================
-   📌 همه چیز از config.json خونده می‌شه
+   📌 فقط از config.json می‌خونه
+   📌 هیچ پیش‌فرضی نداره
    ========================================================= */
 
 package ir.rosha.app
@@ -35,7 +36,7 @@ class ErrorActivity : ComponentActivity() {
         val errorType = intent.getStringExtra("error_type") ?: "unk"
 
         // ===== از config =====
-        val enabled = AppConfig.bool("errors", "enabled", true)
+        val enabled = AppConfig.bool("errors", "enabled")
 
         if (!enabled) {
             startActivity(Intent(this, WebViewActivity::class.java))
@@ -43,14 +44,14 @@ class ErrorActivity : ComponentActivity() {
             return
         }
 
-        val showRetry = AppConfig.bool("errors", "show_retry", true)
-        val showHome = AppConfig.bool("errors", "show_home", true)
-        val retryText = AppConfig.str("errors", "retry_text", "🔄 تلاش مجدد")
-        val retryBg = AppConfig.color("errors", "retry_bg", "#E8A33D")
-        val retryColor = AppConfig.color("errors", "retry_color", "#FFFFFF")
-        val homeText = AppConfig.str("errors", "home_text", "🏠 بازگشت به خانه")
-        val homeColor = AppConfig.color("errors", "home_color", "#B8B0A0")
-        val homeBorder = AppConfig.color("errors", "home_border", "#B8B0A0")
+        val showRetry   = AppConfig.bool("errors", "show_retry")
+        val showHome    = AppConfig.bool("errors", "show_home")
+        val retryText   = AppConfig.str("errors", "retry_text")
+        val retryBg     = AppConfig.color("errors", "retry_bg")
+        val retryColor  = AppConfig.color("errors", "retry_color")
+        val homeText    = AppConfig.str("errors", "home_text")
+        val homeColor   = AppConfig.color("errors", "home_color")
+        val homeBorder  = AppConfig.color("errors", "home_border")
 
         val data = buildErrorData(errorType)
 
@@ -60,20 +61,20 @@ class ErrorActivity : ComponentActivity() {
                 color = Color(data.bg)
             ) {
                 ErrorScreen(
-                    data = data,
-                    showRetry = showRetry,
-                    showHome = showHome,
-                    retryText = retryText,
-                    retryBg = retryBg,
-                    retryColor = retryColor,
-                    homeText = homeText,
-                    homeColor = homeColor,
-                    homeBorder = homeBorder,
-                    onRetry = {
+                    data          = data,
+                    showRetry     = showRetry,
+                    showHome      = showHome,
+                    retryText     = retryText,
+                    retryBg       = retryBg,
+                    retryColor    = retryColor,
+                    homeText      = homeText,
+                    homeColor     = homeColor,
+                    homeBorder    = homeBorder,
+                    onRetry       = {
                         startActivity(Intent(this, WebViewActivity::class.java))
                         finish()
                     },
-                    onHome = {
+                    onHome        = {
                         startActivity(Intent(this, WebViewActivity::class.java))
                         finish()
                     }
@@ -85,21 +86,21 @@ class ErrorActivity : ComponentActivity() {
     private fun buildErrorData(type: String): ErrorData {
         val prefix = when (type) {
             "offline" -> "offline"
-            "server" -> "server"
-            "nf" -> "nf"
-            "fb" -> "fb"
-            "to" -> "to"
-            "dns" -> "dns"
-            "ssl" -> "ssl"
-            "conn" -> "conn"
-            else -> "unk"
+            "server"  -> "server"
+            "nf"      -> "nf"
+            "fb"      -> "fb"
+            "to"      -> "to"
+            "dns"     -> "dns"
+            "ssl"     -> "ssl"
+            "conn"    -> "conn"
+            else      -> "unk"
         }
         return ErrorData(
-            icon = AppConfig.str("errors", "${prefix}_icon", "⚠️"),
-            title = AppConfig.str("errors", "${prefix}_title", "خطای نامشخص"),
-            text = AppConfig.str("errors", "${prefix}_text", ""),
-            color = AppConfig.color("errors", "${prefix}_color", "#E8A33D"),
-            bg = AppConfig.color("errors", "${prefix}_bg", "#0D1B2E")
+            icon  = AppConfig.str("errors.$prefix", "icon"),
+            title = AppConfig.str("errors.$prefix", "title"),
+            text  = AppConfig.str("errors.$prefix", "text"),
+            color = AppConfig.color("errors.$prefix", "color"),
+            bg    = AppConfig.color("errors.$prefix", "bg")
         )
     }
 }
@@ -126,7 +127,6 @@ private fun ErrorScreen(
     onRetry: () -> Unit,
     onHome: () -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -136,7 +136,6 @@ private fun ErrorScreen(
                 )
             )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -144,8 +143,6 @@ private fun ErrorScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
-            // ===== آیکون =====
             Box(
                 modifier = Modifier
                     .size(140.dp)
@@ -161,7 +158,6 @@ private fun ErrorScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ===== عنوان =====
             Text(
                 text = data.title,
                 color = Color(data.color),
@@ -173,7 +169,6 @@ private fun ErrorScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== متن =====
             if (data.text.isNotEmpty()) {
                 Text(
                     text = data.text,
@@ -187,7 +182,6 @@ private fun ErrorScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ===== دکمه تلاش مجدد =====
             if (showRetry) {
                 Button(
                     onClick = onRetry,
@@ -209,7 +203,6 @@ private fun ErrorScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // ===== دکمه خانه =====
             if (showHome) {
                 OutlinedButton(
                     onClick = onHome,
