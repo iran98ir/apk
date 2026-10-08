@@ -6,11 +6,11 @@
         "version_code": 1,
         "version_name": "1.0.0",
         "is_new_app": 1,
-        "icon_48": "/panel/app/build/uploads/icons/icon_48_20261008_083329_d0863e.png",
-        "icon_72": "/panel/app/build/uploads/icons/icon_72_20261008_083329_9fffe3.png",
-        "icon_96": "/panel/app/build/uploads/icons/icon_96_20261008_083329_b4d60f.png",
-        "icon_144": "/panel/app/build/uploads/icons/icon_144_20261008_083329_83f05c.png",
-        "splash_logo": "/panel/app/build/uploads/logos/splash_logo_20261008_083329_c6375e.png"
+        "icon_48": "/panel/app/build/uploads/icons/icon_48_20261008_141244_d2c38f.png",
+        "icon_72": "/panel/app/build/uploads/icons/icon_72_20261008_141244_821ca2.png",
+        "icon_96": "/panel/app/build/uploads/icons/icon_96_20261008_141244_779b65.png",
+        "icon_144": "/panel/app/build/uploads/icons/icon_144_20261008_141244_cfa2f3.png",
+        "splash_logo": "/panel/app/build/uploads/logos/splash_logo_20261008_141244_4947d0.png"
     },
     "colors": {
         "color_primary": "#ffff00",
@@ -20,11 +20,11 @@
         "color_button": "#E8A33D",
         "color_button_text": "#FFFFFF",
         "color_accent": "#C73E3E",
-        "bg_type": "solid",
+        "bg_type": "image",
         "bg_color_1": "#0D1B2E",
         "bg_color_2": "#1B2A4A",
         "bg_gradient_angle": 180,
-        "bg_image": "",
+        "bg_image": "/panel/app/build/uploads/backgrounds/bg_image_20261008_141244_1ebfe9.jpg",
         "bg_effect": "none",
         "bg_effect_opacity": 1
     },
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 13:14:12",
+        "saved_at": "2026-10-08 14:12:51",
         "saved_by": "admin"
     }
-}
+    }
