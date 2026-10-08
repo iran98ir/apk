@@ -26,6 +26,8 @@ jobs:
       # ===== ۱. دریافت کد =====
       - name: 📥 دریافت کد
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # ===== ۲. تشخیص اپ =====
       - name: 🔍 تشخیص اپ
@@ -34,7 +36,7 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             APP="${{ github.event.inputs.app_slug }}"
           else
-            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^configs/.*\.json$' | head -n 1)
+            CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^configs/.*\.json$' | head -n 1 || echo "")
             if [ -z "$CHANGED" ]; then
               APP="app01"
             else
@@ -59,7 +61,16 @@ jobs:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
-      # ===== ۵. کش Gradle =====
+      # ===== ۵. دانلود gradle-wrapper.jar =====
+      - name: 📦 دانلود Gradle Wrapper JAR
+        run: |
+          mkdir -p template/gradle/wrapper
+          curl -L -o template/gradle/wrapper/gradle-wrapper.jar \
+            https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+          chmod +x template/gradlew
+          echo "✅ wrapper.jar دانلود شد"
+
+      # ===== ۶. کش Gradle =====
       - name: ⚡ کش Gradle
         uses: actions/cache@v4
         with:
@@ -70,7 +81,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # ===== ۶. کپی تنظیمات =====
+      # ===== ۷. کپی تنظیمات =====
       - name: 📋 کپی تنظیمات اپ
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -78,10 +89,11 @@ jobs:
             echo "❌ فایل configs/$APP.json پیدا نشد"
             exit 1
           fi
+          mkdir -p template/app/src/main/assets
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ تنظیمات $APP کپی شد"
 
-      # ===== ۷. خواندن اطلاعات =====
+      # ===== ۸. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
@@ -95,7 +107,7 @@ jobs:
           echo "package=$PKG" >> $GITHUB_OUTPUT
           echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
 
-      # ===== ۸. Keystore موقت =====
+      # ===== ۹. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
           mkdir -p template/keystore
@@ -110,11 +122,11 @@ jobs:
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
           echo "✅ Keystore ساخته شد"
 
-      # ===== ۹. دسترسی اجرا =====
+      # ===== ۱۰. دسترسی اجرا =====
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
-      # ===== ۱۰. Build APK =====
+      # ===== ۱۱. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
@@ -125,7 +137,7 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace
 
-      # ===== ۱۱. تغییر نام =====
+      # ===== ۱۲. تغییر نام =====
       - name: 📝 تغییر نام APK
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -138,7 +150,7 @@ jobs:
           cp "$APK" "output/${APP}.apk"
           echo "✅ APK: ${APP}.apk"
 
-      # ===== ۱۲. آپلود =====
+      # ===== ۱۳. آپلود =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -146,12 +158,12 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۳. پاک کردن keystore =====
+      # ===== ۱۴. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/keystore
 
-      # ===== ۱۴. خلاصه =====
+      # ===== ۱۵. خلاصه =====
       - name: ✅ خلاصه
         run: |
           echo "🎉 Build موفق"
