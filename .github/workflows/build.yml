@@ -94,7 +94,33 @@ jobs:
           fi
           mkdir -p template/app/src/main/assets
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
+
           echo "✅ config.json کپی شد از $APP"
+          echo ""
+          echo "====================================================="
+          echo "🔍 دیباگ: چک محتوای config.json داخل assets"
+          echo "====================================================="
+          echo "📏 حجم فایل:"
+          wc -c "template/app/src/main/assets/config.json"
+          echo ""
+          echo "📄 چک کلیدهای اصلی با jq:"
+          echo -n "  branding.app_name: "
+          jq -r '.branding.app_name' "template/app/src/main/assets/config.json"
+          echo -n "  splash.title: "
+          jq -r '.splash.title' "template/app/src/main/assets/config.json"
+          echo -n "  splash.enabled: "
+          jq -r '.splash.enabled' "template/app/src/main/assets/config.json"
+          echo -n "  onboarding.enabled: "
+          jq -r '.onboarding.enabled' "template/app/src/main/assets/config.json"
+          echo -n "  vpn.enabled: "
+          jq -r '.vpn.enabled' "template/app/src/main/assets/config.json"
+          echo -n "  vpn.recheck.text: "
+          jq -r '.vpn.recheck.text' "template/app/src/main/assets/config.json"
+          echo -n "  webview.url: "
+          jq -r '.webview.url' "template/app/src/main/assets/config.json"
+          echo -n "  colors.color_primary: "
+          jq -r '.colors.color_primary' "template/app/src/main/assets/config.json"
+          echo "====================================================="
 
       # ===== ۸. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
@@ -175,7 +201,39 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace --refresh-dependencies
 
-      # ===== ۱۲. تغییر نام APK =====
+      # ===== ۱۲. بررسی APK ساخته‌شده =====
+      - name: 🔍 بررسی محتوای APK
+        run: |
+          APK=$(find template/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "❌ APK پیدا نشد"
+            exit 1
+          fi
+          echo "📦 APK پیدا شد: $APK"
+          echo ""
+          echo "🔍 چک محتوای assets داخل APK:"
+          unzip -l "$APK" | grep -i "assets" || echo "⚠️ assets پیدا نشد"
+          echo ""
+          echo "🔍 استخراج config.json از APK:"
+          mkdir -p /tmp/apk_check
+          unzip -o "$APK" "assets/config.json" -d /tmp/apk_check/ || echo "⚠️ config.json توی APK نیست"
+          if [ -f "/tmp/apk_check/assets/config.json" ]; then
+            echo "✅ config.json داخل APK هست"
+            echo "📏 حجم:"
+            wc -c /tmp/apk_check/assets/config.json
+            echo ""
+            echo "🔍 چک مقادیر داخل APK:"
+            echo -n "  splash.title: "
+            jq -r '.splash.title' /tmp/apk_check/assets/config.json
+            echo -n "  colors.color_primary: "
+            jq -r '.colors.color_primary' /tmp/apk_check/assets/config.json
+            echo -n "  webview.url: "
+            jq -r '.webview.url' /tmp/apk_check/assets/config.json
+          else
+            echo "❌❌❌ config.json توی APK نیست! این مشکل اصلیه!"
+          fi
+
+      # ===== ۱۳. تغییر نام APK =====
       - name: 📝 تغییر نام APK
         run: |
           OUT_NAME="${{ steps.cfg.outputs.out_name }}"
@@ -188,7 +246,7 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
-      # ===== ۱۳. آپلود =====
+      # ===== ۱۴. آپلود =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -196,7 +254,7 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
-      # ===== ۱۴. پاک کردن keystore =====
+      # ===== ۱۵. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
