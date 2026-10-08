@@ -2,7 +2,8 @@
    WebViewActivity.kt — وب‌ویوئر اصلی
    مسیر: template/app/src/main/java/ir/rosha/app/WebViewActivity.kt
    =========================================================
-   📌 همه چیز از config.json خونده می‌شه
+   📌 فقط از config.json می‌خونه
+   📌 هیچ پیش‌فرضی نداره
    ========================================================= */
 
 package ir.rosha.app
@@ -15,6 +16,7 @@ import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -30,71 +32,30 @@ class WebViewActivity : ComponentActivity() {
     private var webView: WebView? = null
     private var currentUrl: String = ""
     private var homeUrl: String = ""
+    private var lastBackTime = 0L
 
     // ===== از config =====
-    private val startUrl: String by lazy {
-        AppConfig.str("webview", "url", "https://example.com")
-    }
-    private val home: String by lazy {
-        AppConfig.str("webview", "url_home", startUrl).ifEmpty { startUrl }
-    }
-    private val jsEnabled: Boolean by lazy {
-        AppConfig.bool("webview", "js_enabled", true)
-    }
-    private val zoomEnabled: Boolean by lazy {
-        AppConfig.bool("webview", "zoom_enabled", false)
-    }
-    private val domStorage: Boolean by lazy {
-        AppConfig.bool("webview", "dom_storage", true)
-    }
-    private val database: Boolean by lazy {
-        AppConfig.bool("webview", "database", true)
-    }
-    private val progressBar: Boolean by lazy {
-        AppConfig.bool("webview", "progress_bar", true)
-    }
-    private val progressColor: Int by lazy {
-        AppConfig.color("webview", "progress_color", "#E8A33D")
-    }
-    private val backButton: Boolean by lazy {
-        AppConfig.bool("webview", "back_button", true)
-    }
-    private val backDouble: Boolean by lazy {
-        AppConfig.bool("webview", "back_double", true)
-    }
-    private val backExitMsg: String by lazy {
-        AppConfig.str("webview", "back_exit_msg", "")
-    }
-    private val cacheEnabled: Boolean by lazy {
-        AppConfig.bool("webview", "cache_enabled", true)
-    }
-    private val userAgentMode: String by lazy {
-        AppConfig.str("webview", "user_agent", "auto")
-    }
-    private val userAgentCustom: String by lazy {
-        AppConfig.str("webview", "user_agent_custom", "")
-    }
-    private val externalLinks: String by lazy {
-        AppConfig.str("webview", "external_links", "inapp")
-    }
-    private val mailLinks: String by lazy {
-        AppConfig.str("webview", "mail_links", "external")
-    }
-    private val telLinks: String by lazy {
-        AppConfig.str("webview", "tel_links", "external")
-    }
-    private val whatsappLinks: String by lazy {
-        AppConfig.str("webview", "whatsapp_links", "external")
-    }
-    private val telegramLinks: String by lazy {
-        AppConfig.str("webview", "telegram_links", "external")
-    }
-    private val instagramLinks: String by lazy {
-        AppConfig.str("webview", "instagram_links", "external")
-    }
-    private val errorEnabled: Boolean by lazy {
-        AppConfig.bool("errors", "enabled", true)
-    }
+    private val startUrl: String by lazy { AppConfig.str("webview", "url") }
+    private val home: String by lazy { AppConfig.str("webview", "url_home").ifEmpty { startUrl } }
+    private val jsEnabled: Boolean by lazy { AppConfig.bool("webview", "js_enabled") }
+    private val zoomEnabled: Boolean by lazy { AppConfig.bool("webview", "zoom_enabled") }
+    private val domStorage: Boolean by lazy { AppConfig.bool("webview", "dom_storage") }
+    private val database: Boolean by lazy { AppConfig.bool("webview", "database") }
+    private val progressBar: Boolean by lazy { AppConfig.bool("webview", "progress_bar") }
+    private val progressColor: Int by lazy { AppConfig.color("webview", "progress_color") }
+    private val backButton: Boolean by lazy { AppConfig.bool("webview", "back_button") }
+    private val backDouble: Boolean by lazy { AppConfig.bool("webview", "back_double") }
+    private val backExitMsg: String by lazy { AppConfig.str("webview", "back_exit_msg") }
+    private val cacheEnabled: Boolean by lazy { AppConfig.bool("webview", "cache_enabled") }
+    private val userAgentMode: String by lazy { AppConfig.str("webview", "user_agent") }
+    private val userAgentCustom: String by lazy { AppConfig.str("webview", "user_agent_custom") }
+    private val externalLinks: String by lazy { AppConfig.str("webview", "external_links") }
+    private val mailLinks: String by lazy { AppConfig.str("webview", "mail_links") }
+    private val telLinks: String by lazy { AppConfig.str("webview", "tel_links") }
+    private val whatsappLinks: String by lazy { AppConfig.str("webview", "whatsapp_links") }
+    private val telegramLinks: String by lazy { AppConfig.str("webview", "telegram_links") }
+    private val instagramLinks: String by lazy { AppConfig.str("webview", "instagram_links") }
+    private val errorEnabled: Boolean by lazy { AppConfig.bool("errors", "enabled") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,7 +75,6 @@ class WebViewActivity : ComponentActivity() {
             }
         }
 
-        // ===== Back هوشمند =====
         if (backButton) {
             onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
@@ -131,21 +91,18 @@ class WebViewActivity : ComponentActivity() {
 
     private fun handleExitBack() {
         if (backDouble) {
-            if (backExitMsg.isNotEmpty()) {
-                android.widget.Toast.makeText(this, backExitMsg, android.widget.Toast.LENGTH_SHORT).show()
-            }
-            // دوبار بزن → خروج
             if (System.currentTimeMillis() - lastBackTime < 2000) {
                 finish()
             } else {
                 lastBackTime = System.currentTimeMillis()
+                if (backExitMsg.isNotEmpty()) {
+                    Toast.makeText(this, backExitMsg, Toast.LENGTH_SHORT).show()
+                }
             }
         } else {
             finish()
         }
     }
-
-    private var lastBackTime = 0L
 
     override fun onPause() {
         super.onPause()
@@ -165,107 +122,61 @@ class WebViewActivity : ComponentActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView(wv: WebView) {
-
         val settings = wv.settings
 
-        // ===== JS =====
         settings.javaScriptEnabled = jsEnabled
-
-        // ===== Zoom =====
         settings.setSupportZoom(zoomEnabled)
         settings.builtInZoomControls = zoomEnabled
         settings.displayZoomControls = false
-
-        // ===== Storage =====
         settings.domStorageEnabled = domStorage
         settings.databaseEnabled = database
 
-        // ===== Cache =====
         settings.cacheMode = if (cacheEnabled) {
             WebSettings.LOAD_DEFAULT
         } else {
             WebSettings.LOAD_NO_CACHE
         }
 
-        // ===== User Agent =====
         when (userAgentMode) {
-            "mobile" -> settings.userAgentString = settings.userAgentString + " RoshaApp"
-            "desktop" -> settings.userAgentString =
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            "custom" -> if (userAgentCustom.isNotEmpty()) {
-                settings.userAgentString = userAgentCustom
-            }
+            "mobile"  -> settings.userAgentString = settings.userAgentString + " RoshaApp"
+            "desktop" -> settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "custom"  -> if (userAgentCustom.isNotEmpty()) settings.userAgentString = userAgentCustom
         }
 
-        // ===== Mixed Content =====
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-
-        // ===== Media =====
         settings.mediaPlaybackRequiresUserGesture = false
 
-        // ===== WebViewClient =====
         wv.webViewClient = object : WebViewClient() {
 
-            override fun shouldOverrideUrlLoading(
-                view: WebView,
-                request: WebResourceRequest
-            ): Boolean {
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
 
-                // ===== تلفن =====
-                if (url.startsWith("tel:")) {
-                    if (telLinks == "external") {
-                        startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(url)))
-                        return true
-                    }
+                if (url.startsWith("tel:") && telLinks == "external") {
+                    startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(url)))
+                    return true
                 }
 
-                // ===== ایمیل =====
-                if (url.startsWith("mailto:")) {
-                    if (mailLinks == "external") {
-                        startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse(url)))
-                        return true
-                    }
+                if (url.startsWith("mailto:") && mailLinks == "external") {
+                    startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse(url)))
+                    return true
                 }
 
-                // ===== واتساپ =====
-                if (url.contains("wa.me") || url.contains("api.whatsapp.com") || url.startsWith("whatsapp:")) {
-                    if (whatsappLinks == "external") {
-                        try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                            return true
-                        } catch (e: Exception) { return false }
-                    }
+                if ((url.contains("wa.me") || url.contains("api.whatsapp.com") || url.startsWith("whatsapp:")) && whatsappLinks == "external") {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))); return true } catch (e: Exception) { return false }
                 }
 
-                // ===== تلگرام =====
-                if (url.contains("t.me") || url.startsWith("tg:")) {
-                    if (telegramLinks == "external") {
-                        try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                            return true
-                        } catch (e: Exception) { return false }
-                    }
+                if ((url.contains("t.me") || url.startsWith("tg:")) && telegramLinks == "external") {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))); return true } catch (e: Exception) { return false }
                 }
 
-                // ===== اینستاگرام =====
-                if (url.contains("instagram.com")) {
-                    if (instagramLinks == "external") {
-                        try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                            return true
-                        } catch (e: Exception) { return false }
-                    }
+                if (url.contains("instagram.com") && instagramLinks == "external") {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))); return true } catch (e: Exception) { return false }
                 }
 
-                // ===== لینک‌های خارجی =====
                 if (externalLinks == "external") {
-                    val isSameDomain = url.contains(Uri.parse(startUrl).host ?: "")
-                    if (!isSameDomain) {
-                        try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                            return true
-                        } catch (e: Exception) { return false }
+                    val host = Uri.parse(startUrl).host ?: ""
+                    if (!url.contains(host)) {
+                        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))); return true } catch (e: Exception) { return false }
                     }
                 }
 
@@ -277,15 +188,9 @@ class WebViewActivity : ComponentActivity() {
                 currentUrl = url ?: ""
             }
 
-            override fun onReceivedError(
-                view: WebView?,
-                request: WebResourceRequest?,
-                error: WebResourceError?
-            ) {
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 super.onReceivedError(view, request, error)
-
                 if (!errorEnabled) return
-
                 if (request?.isForMainFrame == true) {
                     val errorType = when (error?.errorCode) {
                         WebViewClient.ERROR_HOST_LOOKUP -> "dns"
@@ -294,7 +199,6 @@ class WebViewActivity : ComponentActivity() {
                         WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> "ssl"
                         else -> "unk"
                     }
-
                     val intent = Intent(this@WebViewActivity, ErrorActivity::class.java)
                     intent.putExtra("error_type", errorType)
                     startActivity(intent)
@@ -302,18 +206,8 @@ class WebViewActivity : ComponentActivity() {
             }
         }
 
-        // ===== WebChromeClient (Progress Bar) =====
-        if (progressBar) {
-            wv.webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    super.onProgressChanged(view, newProgress)
-                }
-            }
-        } else {
-            wv.webChromeClient = object : WebChromeClient() {}
-        }
+        wv.webChromeClient = object : WebChromeClient() {}
 
-        // ===== لود =====
         wv.loadUrl(startUrl)
     }
 }
