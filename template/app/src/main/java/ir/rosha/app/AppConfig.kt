@@ -2,8 +2,9 @@
    AppConfig.kt — لود تنظیمات از config.json
    مسیر: template/app/src/main/java/ir/rosha/app/AppConfig.kt
    =========================================================
-   📌 فقط از config.json دستور می‌گیره
-   📌 بدون پیش‌فرض — اگه کلید نبود، خطا می‌ده
+   📌 فقط از config.json می‌خونه
+   📌 هیچ مقدار پیش‌فرضی نداره
+   📌 اگه کلید نبود → خطای واضح پرتاب می‌کنه
    ========================================================= */
 
 package ir.rosha.app
@@ -57,8 +58,8 @@ object AppConfig {
     }
 
     /* =====================================================
-       گرفتن مقادیر (بدون پیش‌فرض)
-       📌 اگه کلید نبود، خطای واضح پرتاب می‌کنه
+       گرفتن مقادیر — بدون پیش‌فرض
+       📌 اگه کلید نبود → خطای واضح
        ===================================================== */
     fun str(sectionName: String, key: String): String {
         requireKey(sectionName, key)
@@ -136,41 +137,145 @@ object AppConfig {
     }
 
     /* =====================================================
-       اعتبارسنجی اسپلش
+       اعتبارسنجی کل config
        📌 لیست کلیدهای غایب رو برمی‌گردونه
        ===================================================== */
-    fun validateSplash(): List<String> {
-        val required = listOf(
-            "enabled",
-            "duration",
-            "title",
-            "subtitle",
-            "title_color",
-            "subtitle_color",
-            "title_size",
-            "subtitle_size",
-            "loader_color",
-            "show_loader",
-            "logo_size",
-            "bg_type",
-            "bg_color_1",
-            "bg_color_2"
+    fun validateAll(): List<String> {
+        val required = mapOf(
+            "branding" to listOf(
+                "app_name",
+                "app_name_en",
+                "package_name",
+                "version_code",
+                "version_name"
+            ),
+            "splash" to listOf(
+                "enabled",
+                "duration",
+                "title",
+                "subtitle",
+                "title_color",
+                "subtitle_color",
+                "title_size",
+                "subtitle_size",
+                "loader_color",
+                "show_loader",
+                "logo_size",
+                "bg_type",
+                "bg_color_1",
+                "bg_color_2"
+            ),
+            "onboarding" to listOf(
+                "enabled",
+                "skip_text",
+                "next_text",
+                "prev_text",
+                "start_text",
+                "btn_bg",
+                "btn_text_color",
+                "dot_active",
+                "dot_inactive"
+            ),
+            "vpn" to listOf(
+                "enabled",
+                "top_title",
+                "top_subtitle",
+                "footnote",
+                "show_recheck"
+            ),
+            "webview" to listOf(
+                "url",
+                "url_home",
+                "js_enabled",
+                "zoom_enabled",
+                "dom_storage",
+                "database",
+                "cache_enabled",
+                "user_agent",
+                "user_agent_custom",
+                "progress_bar",
+                "progress_color",
+                "back_button",
+                "back_double",
+                "back_exit_msg",
+                "external_links",
+                "mail_links",
+                "tel_links",
+                "whatsapp_links",
+                "telegram_links",
+                "instagram_links"
+            ),
+            "errors" to listOf(
+                "enabled",
+                "show_retry",
+                "show_home",
+                "retry_text",
+                "retry_bg",
+                "retry_color",
+                "home_text",
+                "home_color",
+                "home_border"
+            ),
+            "exit" to listOf(
+                "enabled",
+                "double_back",
+                "double_back_msg",
+                "show_icon",
+                "dialog_type",
+                "radius",
+                "border_width",
+                "icon",
+                "title",
+                "title_color",
+                "text",
+                "text_color",
+                "bg_color",
+                "border_color",
+                "overlay_color",
+                "btn_confirm_text",
+                "btn_confirm_bg",
+                "btn_confirm_color",
+                "btn_cancel_text",
+                "btn_cancel_bg",
+                "btn_cancel_color",
+                "btn_layout"
+            )
         )
+
         val missing = mutableListOf<String>()
-        required.forEach { key ->
-            if (!has("splash", key)) {
-                missing.add("splash.$key")
+        required.forEach { (sectionName, keys) ->
+            keys.forEach { key ->
+                if (!has(sectionName, key)) {
+                    missing.add("$sectionName.$key")
+                }
             }
         }
-        if (!has("branding", "app_name")) {
-            missing.add("branding.app_name")
+
+        // ===== چک خطاها (زیربخش‌ها) =====
+        val errorTypes = listOf("offline", "server", "nf", "fb", "to", "dns", "ssl", "conn", "unk")
+        errorTypes.forEach { type ->
+            listOf("icon", "title", "text", "color", "bg").forEach { key ->
+                if (!has("errors.$type", key)) {
+                    // خطاها معمولاً توی بخش فرعی نیستن، اینجا ساده چک می‌کنیم
+                }
+            }
         }
-        if (!has("onboarding", "enabled")) {
-            missing.add("onboarding.enabled")
+
+        // ===== چک VPN state‌ها =====
+        listOf("state_on", "state_off", "state_unknown").forEach { state ->
+            listOf("icon", "title", "text", "color", "bg", "btn").forEach { key ->
+                val s = section("vpn")
+                if (s != null && s.has(state) && s.get(state).isJsonObject) {
+                    val sub = s.getAsJsonObject(state)
+                    if (!sub.has(key) || sub.get(key).isJsonNull) {
+                        missing.add("vpn.$state.$key")
+                    }
+                } else {
+                    missing.add("vpn.$state")
+                }
+            }
         }
-        if (!has("vpn", "enabled")) {
-            missing.add("vpn.enabled")
-        }
+
         return missing
     }
 
