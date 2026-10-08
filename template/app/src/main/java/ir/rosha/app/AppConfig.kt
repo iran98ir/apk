@@ -1,112 +1,126 @@
 /* =========================================================
-   AppConfig.kt  —  لود تنظیمات از config.json
+   AppConfig.kt — لود تنظیمات از config.json
    مسیر: template/app/src/main/java/ir/rosha/app/AppConfig.kt
    =========================================================
-   📌 این کلاس، فایل config.json رو از assets میخونه
-   📌 همه‌ی تنظیمات پنل از اینجا در دسترس اپ قرار میگیره
+   📌 همه چیز از config.json خونده می‌شه
+   📌 مطابق ساختار پنل روشا
    ========================================================= */
 
 package ir.rosha.app
 
 import android.content.Context
+import android.graphics.Color
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 object AppConfig {
 
-    private var jsonData: JsonObject? = null
+    private var json: JsonObject? = null
 
-    /* ===== لود تنظیمات ===== */
+    /* =====================================================
+       لود
+       ===================================================== */
     fun init(context: Context) {
-        try {
-            val jsonString = context.assets
-                .open("config.json")
+        json = try {
+            val text = context.assets.open("config.json")
                 .bufferedReader()
                 .use { it.readText() }
-
-            jsonData = Gson().fromJson(jsonString, JsonObject::class.java)
-
+            Gson().fromJson(text, JsonObject::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
-            jsonData = JsonObject()
+            JsonObject()
         }
     }
 
-    /* ===== دسترسی به یک بخش از تنظیمات ===== */
-    fun getSection(section: String): JsonObject? {
+    /* =====================================================
+       دسترسی به بخش
+       ===================================================== */
+    private fun section(name: String): JsonObject? {
         return try {
-            jsonData?.getAsJsonObject(section)
+            json?.getAsJsonObject(name)
         } catch (e: Exception) {
             null
         }
     }
 
-    /* ===== گرفتن رشته ===== */
-    fun getString(section: String, key: String, default: String = ""): String {
+    /* =====================================================
+       گرفتن مقادیر
+       ===================================================== */
+    fun str(sectionName: String, key: String, def: String = ""): String {
         return try {
-            val s = getSection(section) ?: return default
-            if (s.has(key) && !s.get(key).isJsonNull) {
-                s.get(key).asString
-            } else {
-                default
+            val s = section(sectionName) ?: return def
+            if (s.has(key) && !s.get(key).isJsonNull) s.get(key).asString else def
+        } catch (e: Exception) { def }
+    }
+
+    fun int(sectionName: String, key: String, def: Int = 0): Int {
+        return try {
+            val s = section(sectionName) ?: return def
+            if (s.has(key) && !s.get(key).isJsonNull) s.get(key).asInt else def
+        } catch (e: Exception) { def }
+    }
+
+    fun float(sectionName: String, key: String, def: Float = 0f): Float {
+        return try {
+            val s = section(sectionName) ?: return def
+            if (s.has(key) && !s.get(key).isJsonNull) s.get(key).asFloat else def
+        } catch (e: Exception) { def }
+    }
+
+    fun bool(sectionName: String, key: String, def: Boolean = false): Boolean {
+        return try {
+            val s = section(sectionName) ?: return def
+            if (s.has(key) && !s.get(key).isJsonNull) s.get(key).asBoolean else def
+        } catch (e: Exception) { def }
+    }
+
+    fun color(sectionName: String, key: String, def: String = "#FFFFFF"): Int {
+        val hex = str(sectionName, key, def)
+        return parseColor(hex, def)
+    }
+
+    fun obj(sectionName: String, key: String): JsonObject? {
+        return try {
+            val s = section(sectionName) ?: return null
+            if (s.has(key) && s.get(key).isJsonObject) s.getAsJsonObject(key) else null
+        } catch (e: Exception) { null }
+    }
+
+    fun arr(sectionName: String, key: String): JsonArray? {
+        return try {
+            val s = section(sectionName) ?: return null
+            if (s.has(key) && s.get(key).isJsonArray) s.getAsJsonArray(key) else null
+        } catch (e: Exception) { null }
+    }
+
+    /* =====================================================
+       گرفتن رنگ از Hex
+       ===================================================== */
+    fun parseColor(hex: String, def: String = "#FFFFFF"): Int {
+        return try {
+            Color.parseColor(hex)
+        } catch (e: Exception) {
+            try {
+                Color.parseColor(def)
+            } catch (e2: Exception) {
+                Color.WHITE
             }
-        } catch (e: Exception) {
-            default
         }
     }
 
-    /* ===== گرفتن عدد ===== */
-    fun getInt(section: String, key: String, default: Int = 0): Int {
+    /* =====================================================
+       بررسی وجود کلید
+       ===================================================== */
+    fun has(sectionName: String, key: String): Boolean {
         return try {
-            val s = getSection(section) ?: return default
-            if (s.has(key) && !s.get(key).isJsonNull) {
-                s.get(key).asInt
-            } else {
-                default
-            }
-        } catch (e: Exception) {
-            default
-        }
+            val s = section(sectionName) ?: return false
+            s.has(key) && !s.get(key).isJsonNull
+        } catch (e: Exception) { false }
     }
 
-    /* ===== گرفتن اعشار ===== */
-    fun getFloat(section: String, key: String, default: Float = 0f): Float {
-        return try {
-            val s = getSection(section) ?: return default
-            if (s.has(key) && !s.get(key).isJsonNull) {
-                s.get(key).asFloat
-            } else {
-                default
-            }
-        } catch (e: Exception) {
-            default
-        }
-    }
-
-    /* ===== گرفتن بولین ===== */
-    fun getBool(section: String, key: String, default: Boolean = false): Boolean {
-        return try {
-            val s = getSection(section) ?: return default
-            if (s.has(key) && !s.get(key).isJsonNull) {
-                s.get(key).asBoolean
-            } else {
-                default
-            }
-        } catch (e: Exception) {
-            default
-        }
-    }
-
-    /* ===== گرفتن رنگ (مثلاً #E8A33D به Int) ===== */
-    fun getColor(section: String, key: String, default: String = "#E8A33D"): Int {
-        val hex = getString(section, key, default)
-        return try {
-            android.graphics.Color.parseColor(hex)
-        } catch (e: Exception) {
-            android.graphics.Color.parseColor(default)
-        }
-    }
-
-    /* ===== دسترسی مستقیم به کل داده ===== */
-    fun getAll(): JsonObject? = jsonData
+    /* =====================================================
+       دسترسی مستقیم به کل داده
+       ===================================================== */
+    fun all(): JsonObject? = json
 }
