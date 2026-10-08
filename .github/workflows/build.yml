@@ -1,5 +1,6 @@
 # =========================================================
 # build.yml — GitHub Actions برای ساخت APK
+# مسیر: .github/workflows/build.yml
 # =========================================================
 
 name: Build APK
@@ -22,11 +23,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ===== ۱. دریافت کد =====
       - name: 📥 دریافت کد
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ===== ۲. تشخیص اپ =====
       - name: 🔍 تشخیص اپ
         id: detect
         run: |
@@ -43,12 +46,14 @@ jobs:
           echo "app_slug=$APP" >> $GITHUB_OUTPUT
           echo "✅ اپ: $APP"
 
+      # ===== ۳. نصب Java 17 =====
       - name: ☕ نصب Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # ===== ۴. راه‌اندازی Android SDK =====
       - name: 🤖 راه‌اندازی Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -56,13 +61,16 @@ jobs:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
+      # ===== ۵. دانلود gradle-wrapper.jar =====
       - name: 📦 دانلود Gradle Wrapper JAR
         run: |
           mkdir -p template/gradle/wrapper
           curl -L -o template/gradle/wrapper/gradle-wrapper.jar \
             https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
           chmod +x template/gradlew
+          echo "✅ wrapper.jar دانلود شد"
 
+      # ===== ۶. کش Gradle =====
       - name: ⚡ کش Gradle
         uses: actions/cache@v4
         with:
@@ -73,6 +81,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      # ===== ۷. کپی تنظیمات =====
       - name: 📋 کپی تنظیمات اپ
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -84,6 +93,7 @@ jobs:
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
           echo "✅ تنظیمات $APP کپی شد"
 
+      # ===== ۸. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
@@ -93,10 +103,13 @@ jobs:
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
 
+      # ===== ۹. دانلود آیکون‌ها از پنل (با پروکسی) =====
       - name: 🎨 دانلود آیکون‌ها از پنل
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
           BASE_URL="https://rosha-24.ir"
+          PROXY="https://api.allorigins.win/raw?url="
+          PROXY2="https://corsproxy.io/?"
 
           ICON_48=$(jq -r '.branding.icon_48 // ""' "configs/$APP.json")
           ICON_72=$(jq -r '.branding.icon_72 // ""' "configs/$APP.json")
@@ -112,21 +125,65 @@ jobs:
           mkdir -p template/app/src/main/res/mipmap-xhdpi
           mkdir -p template/app/src/main/res/mipmap-xxhdpi
 
+          download_icon() {
+            local url="$1"
+            local output="$2"
+            local name="$3"
+
+            echo "🔽 $name"
+
+            # ===== تلاش ۱: مستقیم =====
+            if curl -f -L --max-time 15 -o "$output" "$url" 2>/dev/null; then
+              echo "  ✅ مستقیم"
+              return 0
+            fi
+
+            # ===== تلاش ۲: allorigins =====
+            local encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$url")
+            if curl -f -L --max-time 30 -o "$output" "${PROXY}${encoded}" 2>/dev/null; then
+              echo "  ✅ همه‌گیرها (allorigins)"
+              return 0
+            fi
+
+            # ===== تلاش ۳: corsproxy.io =====
+            if curl -f -L --max-time 30 -o "$output" "${PROXY2}${encoded}" 2>/dev/null; then
+              echo "  ✅ corsproxy"
+              return 0
+            fi
+
+            # ===== تلاش ۴: weserv (تصویر) =====
+            if curl -f -L --max-time 30 -o "$output" "https://images.weserv.nl/?url=${url#https://}" 2>/dev/null; then
+              echo "  ✅ weserv"
+              return 0
+            fi
+
+            echo "  ❌ fail"
+            return 1
+          }
+
           [ -n "$ICON_48" ] && [ "$ICON_48" != "null" ] && \
-            curl -f -L -o template/app/src/main/res/mipmap-mdpi/ic_launcher.png "$BASE_URL$ICON_48" && echo "✅ icon_48"
+            download_icon "$BASE_URL$ICON_48" "template/app/src/main/res/mipmap-mdpi/ic_launcher.png" "icon_48"
 
           [ -n "$ICON_72" ] && [ "$ICON_72" != "null" ] && \
-            curl -f -L -o template/app/src/main/res/mipmap-hdpi/ic_launcher.png "$BASE_URL$ICON_72" && echo "✅ icon_72"
+            download_icon "$BASE_URL$ICON_72" "template/app/src/main/res/mipmap-hdpi/ic_launcher.png" "icon_72"
 
           [ -n "$ICON_96" ] && [ "$ICON_96" != "null" ] && \
-            curl -f -L -o template/app/src/main/res/mipmap-xhdpi/ic_launcher.png "$BASE_URL$ICON_96" && echo "✅ icon_96"
+            download_icon "$BASE_URL$ICON_96" "template/app/src/main/res/mipmap-xhdpi/ic_launcher.png" "icon_96"
 
           [ -n "$ICON_144" ] && [ "$ICON_144" != "null" ] && \
-            curl -f -L -o template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png "$BASE_URL$ICON_144" && echo "✅ icon_144"
+            download_icon "$BASE_URL$ICON_144" "template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png" "icon_144"
 
-          echo "🎨 لیست:"
+          echo ""
+          echo "🎨 لیست آیکون‌ها:"
           find template/app/src/main/res -name "ic_launcher*" -type f
 
+          echo ""
+          echo "📏 ابعاد:"
+          for f in $(find template/app/src/main/res -name "ic_launcher.png"); do
+            file "$f"
+          done
+
+      # ===== ۱۰. Keystore موقت =====
       - name: 🔑 ساخت keystore موقت
         run: |
           mkdir -p template/app/keystore
@@ -139,10 +196,13 @@ jobs:
             -storepass "rosha${{ github.run_id }}" \
             -keypass "rosha${{ github.run_id }}" \
             -dname "CN=Rosha, OU=Apps, O=Rosha, L=Tehran, S=Tehran, C=IR"
+          echo "✅ Keystore ساخته شد"
 
+      # ===== ۱۱. دسترسی اجرا =====
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
+      # ===== ۱۲. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
@@ -154,6 +214,7 @@ jobs:
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace
 
+      # ===== ۱۳. تغییر نام =====
       - name: 📝 تغییر نام APK
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
@@ -170,6 +231,7 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
+      # ===== ۱۴. آپلود APK =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
@@ -177,6 +239,15 @@ jobs:
           path: output/*.apk
           retention-days: 30
 
+      # ===== ۱۵. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
+
+      # ===== ۱۶. خلاصه =====
+      - name: ✅ خلاصه
+        run: |
+          echo "🎉 Build موفق"
+          echo "اپ: ${{ steps.detect.outputs.app_slug }}"
+          echo "نسخه: ${{ steps.cfg.outputs.ver_name }}"
+          echo "پکیج: ${{ steps.cfg.outputs.package }}"
