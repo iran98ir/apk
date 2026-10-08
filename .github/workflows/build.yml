@@ -1,5 +1,5 @@
 # =========================================================
-# build.yml — GitHub Actions برای ساخت APK
+# build.yml — GitHub Actions برای ساخت APK (چند اپی)
 # =========================================================
 
 name: Build APK
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       app_slug:
-        description: 'شناسه‌ی اپ'
+        description: 'شناسه اپ (مثلاً: app01)'
         required: true
         type: string
         default: 'app01'
@@ -22,33 +22,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ===== ۱. دریافت کد =====
       - name: 📥 دریافت کد
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
+      # ===== ۲. تشخیص اپ =====
       - name: 🔍 تشخیص اپ
         id: detect
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             APP="${{ github.event.inputs.app_slug }}"
+            echo "🔵 حالت دستی: $APP"
           else
-            CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^configs/.*\.json$' | head -n 1 || echo "")
+            # فایل‌های .json که در آخرین commit تغییر کردن
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'configs/*.json' | head -n 1)
+            echo "🔵 فایل تغییر یافته: $CHANGED"
             if [ -z "$CHANGED" ]; then
-              APP="app01"
-            else
-              APP=$(basename "$CHANGED" .json)
+              # اگه هیچی تغییر نکرده، همه فایل‌ها رو ببین
+              CHANGED=$(ls configs/*.json | head -n 1)
             fi
+            APP=$(basename "$CHANGED" .json)
           fi
           echo "app_slug=$APP" >> $GITHUB_OUTPUT
           echo "✅ اپ: $APP"
 
+      # ===== ۳. نصب Java 17 =====
       - name: ☕ نصب Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # ===== ۴. Android SDK =====
       - name: 🤖 راه‌اندازی Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -56,6 +63,7 @@ jobs:
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
 
+      # ===== ۵. gradle-wrapper.jar =====
       - name: 📦 دانلود Gradle Wrapper JAR
         run: |
           mkdir -p template/gradle/wrapper
@@ -63,30 +71,41 @@ jobs:
             https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
           chmod +x template/gradlew
 
-      - name: 📋 کپی تنظیمات اپ
+      # ===== ۶. کپی تنظیمات =====
+      - name: 📋 کپی تنظیمات
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
           if [ ! -f "configs/$APP.json" ]; then
-            echo "❌ فایل configs/$APP.json پیدا نشد"
+            echo "❌ configs/$APP.json پیدا نشد"
             exit 1
           fi
           mkdir -p template/app/src/main/assets
           cp "configs/$APP.json" "template/app/src/main/assets/config.json"
-          echo "✅ تنظیمات $APP کپی شد"
+          echo "✅ config.json کپی شد از $APP"
 
+      # ===== ۷. خواندن اطلاعات =====
       - name: 📖 خواندن اطلاعات
         id: cfg
         run: |
           APP="${{ steps.detect.outputs.app_slug }}"
           VER_NAME=$(jq -r '.branding.version_name // "1.0.0"' "configs/$APP.json")
           PKG=$(jq -r '.branding.package_name // "ir.rosha.app"' "configs/$APP.json")
+          APP_NAME=$(jq -r '.branding.app_name // "app"' "configs/$APP.json")
+          OUT_NAME=$(jq -r '.advanced.output_name // ""' "configs/$APP.json")
+
+          if [ -z "$OUT_NAME" ] || [ "$OUT_NAME" == "null" ]; then
+            OUT_NAME="$APP"
+          fi
+
           echo "ver_name=$VER_NAME" >> $GITHUB_OUTPUT
           echo "package=$PKG" >> $GITHUB_OUTPUT
+          echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "out_name=$OUT_NAME" >> $GITHUB_OUTPUT
+          echo "📦 APK: $OUT_NAME.apk"
 
+      # ===== ۸. کپی آیکون‌ها =====
       - name: 🎨 کپی آیکون‌ها
         run: |
-          echo "📥 کپی آیکون‌ها از template/icons..."
-
           rm -rf template/app/src/main/res/mipmap-anydpi-v26
 
           mkdir -p template/app/src/main/res/mipmap-mdpi
@@ -94,47 +113,31 @@ jobs:
           mkdir -p template/app/src/main/res/mipmap-xhdpi
           mkdir -p template/app/src/main/res/mipmap-xxhdpi
 
-          # ===== mdpi =====
-          if [ -f "template/icons/mdpi/icon.png" ]; then
-            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher.png
-            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-            echo "✅ mdpi"
-          fi
+          [ -f "template/icons/mdpi/icon.png" ] && \
+            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher.png && \
+            cp template/icons/mdpi/icon.png template/app/src/main/res/mipmap-mdpi/ic_launcher_round.png && echo "✅ mdpi"
 
-          # ===== hdpi =====
-          if [ -f "template/icons/hdpi/icon.png" ]; then
-            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher.png
-            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-            echo "✅ hdpi"
-          fi
+          [ -f "template/icons/hdpi/icon.png" ] && \
+            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher.png && \
+            cp template/icons/hdpi/icon.png template/app/src/main/res/mipmap-hdpi/ic_launcher_round.png && echo "✅ hdpi"
 
-          # ===== xhdpi =====
-          if [ -f "template/icons/xhdpi/icon.png" ]; then
-            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-            echo "✅ xhdpi"
-          fi
+          [ -f "template/icons/xhdpi/icon.png" ] && \
+            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher.png && \
+            cp template/icons/xhdpi/icon.png template/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png && echo "✅ xhdpi"
 
-          # ===== xxhdpi =====
-          if [ -f "template/icons/xxhdpi/icon.png" ]; then
-            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-            echo "✅ xxhdpi"
-          fi
+          [ -f "template/icons/xxhdpi/icon.png" ] && \
+            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher.png && \
+            cp template/icons/xxhdpi/icon.png template/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png && echo "✅ xxhdpi"
 
-          # ===== splash =====
           mkdir -p template/app/src/main/res/drawable
-          if [ -f "template/icons/splash.png" ]; then
-            cp template/icons/splash.png template/app/src/main/res/drawable/splash_logo.png
-            echo "✅ splash"
-          fi
+          [ -f "template/icons/splash.png" ] && \
+            cp template/icons/splash.png template/app/src/main/res/drawable/splash_logo.png && echo "✅ splash"
 
           echo ""
-          echo "🎨 لیست آیکون‌ها:"
           find template/app/src/main/res -name "ic_launcher*" -type f
-          find template/app/src/main/res -name "splash_logo*" -type f
 
-      - name: 🔑 ساخت keystore موقت
+      # ===== ۹. Keystore =====
+      - name: 🔑 ساخت keystore
         run: |
           mkdir -p template/app/keystore
           keytool -genkeypair -v \
@@ -150,24 +153,22 @@ jobs:
       - name: 🔧 دسترسی اجرا
         run: chmod +x template/gradlew
 
+      # ===== ۱۰. Build APK =====
       - name: 🏗️ ساخت APK
         working-directory: ./template
         run: |
           KEYSTORE_PATH="$PWD/app/keystore/temp.jks"
-          ./gradlew assembleRelease \
+          ./gradlew clean assembleRelease \
             -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="rosha${{ github.run_id }}" \
             -Pandroid.injected.signing.key.alias=tempkey \
             -Pandroid.injected.signing.key.password="rosha${{ github.run_id }}" \
             --no-daemon --stacktrace
 
+      # ===== ۱۱. تغییر نام APK =====
       - name: 📝 تغییر نام APK
         run: |
-          APP="${{ steps.detect.outputs.app_slug }}"
-          OUT_NAME=$(jq -r '.advanced.output_name // ""' "configs/$APP.json")
-          if [ -z "$OUT_NAME" ] || [ "$OUT_NAME" == "null" ]; then
-            OUT_NAME="$APP"
-          fi
+          OUT_NAME="${{ steps.cfg.outputs.out_name }}"
           APK=$(find template/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -z "$APK" ]; then
             echo "❌ APK پیدا نشد"
@@ -177,13 +178,15 @@ jobs:
           cp "$APK" "output/${OUT_NAME}.apk"
           echo "✅ APK: ${OUT_NAME}.apk"
 
+      # ===== ۱۲. آپلود =====
       - name: 📤 آپلود APK
         uses: actions/upload-artifact@v4
         with:
-          name: APK-${{ steps.detect.outputs.app_slug }}
+          name: APK-${{ steps.cfg.outputs.out_name }}
           path: output/*.apk
           retention-days: 30
 
+      # ===== ۱۳. پاک کردن keystore =====
       - name: 🗑️ پاک کردن keystore
         if: always()
         run: rm -rf template/app/keystore
