@@ -26,7 +26,7 @@
         "bg_gradient_angle": 180,
         "bg_image": "/panel/app/build/uploads/backgrounds/bg_image_20261008_141244_1ebfe9.jpg",
         "bg_effect": "none",
-        "bg_effect_opacity": 1
+        "bg_effect_opacity": 0.05000000000000000277555756156289135105907917022705078125
     },
     "fonts": {
         "font_family": "IRANSans",
@@ -36,7 +36,7 @@
         "title_weight": 800,
         "subtitle_size": 18,
         "subtitle_weight": 600,
-        "body_size": 43,
+        "body_size": 34,
         "body_weight": 700,
         "button_size": 13,
         "button_weight": 800,
@@ -307,7 +307,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-08 23:32:35",
+        "saved_at": "2026-10-08 23:41:56",
         "saved_by": "admin"
     }
-    }
+}
