@@ -1,12 +1,8 @@
-/* =========================================================
-   PreloadManager.java — لود پس‌زمینه‌ی WebView
-   مسیر: app/src/main/java/app/vista/PreloadManager.java
-   ========================================================= */
-
 package app.vista;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -45,19 +41,19 @@ public class PreloadManager {
         Handler mainHandler = new Handler(Looper.getMainLooper());
         AtomicBoolean completed = new AtomicBoolean(false);
 
-        String url = ConfigLoader.get().getUrl();
+        String url = Config.WV_URL;
 
         mainHandler.post(() -> {
             try {
                 WebView webView = new WebView(appContext);
                 setupWebView(webView, appContext);
 
-                final Runnable timeoutRunnable = () -> {
+                final Runnable timeout = () -> {
                     if (completed.compareAndSet(false, true)) {
                         callback.onPageFailed();
                     }
                 };
-                mainHandler.postDelayed(timeoutRunnable, TIMEOUT_MS);
+                mainHandler.postDelayed(timeout, TIMEOUT_MS);
 
                 webView.setWebViewClient(new WebViewClient() {
                     @Override
@@ -65,7 +61,7 @@ public class PreloadManager {
                         super.onPageFinished(view, url);
                         sCachedWebView = view;
                         sIsLoaded = true;
-                        mainHandler.removeCallbacks(timeoutRunnable);
+                        mainHandler.removeCallbacks(timeout);
                         if (completed.compareAndSet(false, true)) {
                             callback.onPageLoaded();
                         }
@@ -75,7 +71,7 @@ public class PreloadManager {
                     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                         super.onReceivedError(view, request, error);
                         if (request.isForMainFrame()) {
-                            mainHandler.removeCallbacks(timeoutRunnable);
+                            mainHandler.removeCallbacks(timeout);
                             if (completed.compareAndSet(false, true)) {
                                 callback.onPageFailed();
                             }
@@ -88,7 +84,7 @@ public class PreloadManager {
                         if (request.isForMainFrame()) {
                             int status = errorResponse != null ? errorResponse.getStatusCode() : -1;
                             if (status >= 400) {
-                                mainHandler.removeCallbacks(timeoutRunnable);
+                                mainHandler.removeCallbacks(timeout);
                                 if (completed.compareAndSet(false, true)) {
                                     callback.onPageFailed();
                                 }
@@ -100,7 +96,7 @@ public class PreloadManager {
                 webView.loadUrl(url);
 
             } catch (Exception e) {
-                Log.e(TAG, "Preload error: " + e.getMessage());
+                Log.e(TAG, "preload: " + e.getMessage());
                 if (completed.compareAndSet(false, true)) {
                     callback.onPageFailed();
                 }
@@ -110,27 +106,34 @@ public class PreloadManager {
 
     @SuppressLint("SetJavaScriptEnabled")
     private static void setupWebView(WebView webView, Context context) {
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setSupportZoom(false);
-        settings.setBuiltInZoomControls(false);
-        settings.setDisplayZoomControls(false);
-        settings.setUseWideViewPort(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setAllowFileAccess(false);
-        settings.setAllowContentAccess(false);
-        settings.setAllowFileAccessFromFileURLs(false);
-        settings.setAllowUniversalAccessFromFileURLs(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setTextZoom(100);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(Config.WV_JS);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setDomStorageEnabled(Config.WV_DOM);
+        s.setDatabaseEnabled(Config.WV_DATABASE);
+        s.setCacheMode(Config.WV_CACHE ? WebSettings.LOAD_DEFAULT : WebSettings.LOAD_NO_CACHE);
+        s.setSupportZoom(Config.WV_ZOOM);
+        s.setBuiltInZoomControls(Config.WV_ZOOM);
+        s.setDisplayZoomControls(false);
+        s.setUseWideViewPort(true);
+        s.setLoadWithOverviewMode(true);
+        s.setAllowFileAccess(Config.WV_FILE_UPLOAD);
+        s.setAllowContentAccess(Config.WV_FILE_UPLOAD);
+        s.setAllowFileAccessFromFileURLs(false);
+        s.setAllowUniversalAccessFromFileURLs(false);
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        s.setTextZoom(100);
 
-        int bgColor = context.getResources().getColor(R.color.color_background, null);
-        webView.setBackgroundColor(bgColor);
+        if ("custom".equals(Config.WV_USER_AGENT)) {
+            s.setUserAgentString(Config.WV_USER_AGENT_CUSTOM);
+        }
+
+        try {
+            webView.setBackgroundColor(Color.parseColor(Config.COLOR_BACKGROUND));
+        } catch (Exception ignored) {
+            webView.setBackgroundColor(Color.WHITE);
+        }
     }
 
     public static WebView takeWebView() {
@@ -150,15 +153,19 @@ public class PreloadManager {
                 sCachedWebView.loadUrl("about:blank");
                 sCachedWebView.removeAllViews();
                 sCachedWebView.destroy();
-            } catch (Exception e) {
-                Log.e(TAG, "Error clearing WebView: " + e.getMessage());
-            }
+            } catch (Exception ignored) {}
             sCachedWebView = null;
         }
         sIsLoaded = false;
     }
+}package app.vista;
 
-    public static void reset() {
-        clear();
+import android.app.Application;
+
+public class VistaApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        ConfigLoader.get(this);
     }
-          }
+}
