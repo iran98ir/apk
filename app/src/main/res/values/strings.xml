@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =========================================================
+     strings.xml — متن‌های اپ
+     مسیر: app/src/main/res/values/strings.xml
+     =========================================================
+     📌 این فایل توسط inject.py خودکار پر می‌شه
+     📌 مقادیر از config/app01.json میان
+     📌 این نسخه‌ی موقتیه — قبل از build بازنویسی می‌شه
+     ========================================================= -->
+<resources>
+
+    <!-- ===== نام اپ ===== -->
+    <string name="app_name">App</string>
+
+    <!-- ===== URL ===== -->
+    <string name="base_url">https://example.com</string>
+
+    <!-- ===== Splash ===== -->
+    <string name="splash_title"></string>
+    <string name="splash_subtitle"></string>
+    <string name="splash_loading">در حال آماده‌سازی…</string>
+
+    <!-- ===== Welcome ===== -->
+    <string name="welcome_title"></string>
+    <string name="welcome_subtitle"></string>
+    <string name="welcome_button">ورود</string>
+
+    <!-- ===== Onboarding ===== -->
+    <string name="onb_skip">رد کردن</string>
+    <string name="onb_next">بعدی</string>
+    <string name="onb_prev">قبلی</string>
+    <string name="onb_start">شروع کن</string>
+    <string name="onb_s1_title"></string>
+    <string name="onb_s1_text"></string>
+    <string name="onb_s2_title"></string>
+    <string name="onb_s2_text"></string>
+    <string name="onb_s3_title"></string>
+    <string name="onb_s3_text"></string>
+
+    <!-- ===== VPN ===== -->
+    <string name="vpn_top_title"></string>
+    <string name="vpn_top_subtitle"></string>
+    <string name="vpn_footnote"></string>
+    <string name="vpn_on_title"></string>
+    <string name="vpn_on_text"></string>
+    <string name="vpn_on_btn"></string>
+    <string name="vpn_off_title"></string>
+    <string name="vpn_off_text"></string>
+    <string name="vpn_off_btn"></string>
+    <string name="vpn_unk_title"></string>
+    <string name="vpn_unk_text"></string>
+    <string name="vpn_unk_btn"></string>
+
+    <!-- ===== خطاها ===== -->
+    <string name="error_retry">🔄 تلاش مجدد</string>
+    <string name="error_offline_title"></string>
+    <string name="error_offline_text"></string>
+    <string name="error_server_title"></string>
+    <string name="error_server_text"></string>
+    <string name="error_nf_title"></string>
+    <string name="error_nf_text"></string>
+    <string name="error_fb_title"></string>
+    <string name="error_fb_text"></string>
+    <string name="error_to_title"></string>
+    <string name="error_to_text"></string>
+    <string name="error_dns_title"></string>
+    <string name="error_dns_text"></string>
+    <string name="error_ssl_title"></string>
+    <string name="error_ssl_text"></string>
+    <string name="error_conn_title"></string>
+    <string name="error_conn_text"></string>
+    <string name="error_unk_title"></string>
+    <string name="error_unk_text"></string>
+
+    <!-- ===== خروج ===== -->
+    <string name="exit_title"></string>
+    <string name="exit_text"></string>
+    <string name="exit_confirm"></string>
+    <string name="exit_cancel"></string>
+    <string name="back_double_msg"></string>
+
+    <!-- ===== Pull to refresh ===== -->
+    <string name="pull_text"></string>
+    <string name="pull_release"></string>
+    <string name="pull_loading"></string>
+
+</resources>
