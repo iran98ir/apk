@@ -1,11 +1,11 @@
 {
     "branding": {
-        "app_name": "اپ جدید ۱6666",
-        "app_name_en": "hdjddh",
-        "package_name": "ir.rosha.app1",
-        "version_code": 1,
+        "app_name": "اپ جدید ۱ ۶۶۶۷",
+        "app_name_en": "hdjddhsns",
+        "package_name": "ir.rosha.app12",
+        "version_code": 0,
         "version_name": "1.0.0",
-        "is_new_app": 0,
+        "is_new_app": 1,
         "icon_48": "",
         "icon_72": "",
         "icon_96": "",
@@ -306,7 +306,7 @@
         "website": ""
     },
     "_meta": {
-        "saved_at": "2026-10-09 22:10:21",
+        "saved_at": "2026-10-09 23:17:07",
         "saved_by": "admin"
     }
-    }
+}
