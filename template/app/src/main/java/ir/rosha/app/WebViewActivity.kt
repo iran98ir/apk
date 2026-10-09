@@ -4,7 +4,7 @@
    =========================================================
    📌 فقط از config.json می‌خونه
    📌 هیچ خطای خام مرورگری نشون داده نمیشه
-   📌 همه‌ی خطاها (شبکه، HTTP، SSL، کرش) مدیریت شده
+   📌 رنگ نوار بالا/پایین از colors.color_background
    ========================================================= */
 
 package ir.rosha.app
@@ -60,6 +60,11 @@ class WebViewActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ===== رنگ نوار بالا و پایین =====
+        val bgBarColor = AppConfig.color("colors", "color_background")
+        window.statusBarColor = bgBarColor
+        window.navigationBarColor = bgBarColor
 
         currentUrl = startUrl
         homeUrl = home
@@ -258,7 +263,6 @@ class WebViewActivity : ComponentActivity() {
                 }
                 errorShown = true
 
-                // ===== لغو اتصال ناامن =====
                 handler?.cancel()
 
                 if (!errorEnabled) return
@@ -271,7 +275,6 @@ class WebViewActivity : ComponentActivity() {
                 view: WebView?,
                 detail: RenderProcessGoneDetail?
             ): Boolean {
-                // ===== WebView کرش کرده =====
                 if (!errorEnabled) return false
 
                 webView?.destroy()
@@ -289,9 +292,6 @@ class WebViewActivity : ComponentActivity() {
         wv.loadUrl(startUrl)
     }
 
-    /* =====================================================
-       نمایش صفحه‌ی خطای زیبا
-       ===================================================== */
     private fun showError(errorType: String) {
         val intent = Intent(this, ErrorActivity::class.java)
         intent.putExtra("error_type", errorType)
