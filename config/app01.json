@@ -1,7 +1,7 @@
 {
     "branding": {
-        "app_name": "مو✂️مو",
-        "app_name_en": "mu✂️mu",
+        "app_name": "مومو",
+        "app_name_en": "mumu",
         "package_name": "ir.rayan01",
         "version_code": 12,
         "version_name": "1.0.0",
@@ -57,7 +57,7 @@
         "bg_image": "",
         "logo_size": 180,
         "logo_anim": "bounce",
-        "title": "مومو",
+        "title": "مو✂️✂️مو",
         "title_size": 28,
         "title_color": "#fb7185",
         "title_anim": "scale",
@@ -70,7 +70,7 @@
         "show_loader": 1
     },
     "onboarding": {
-        "enabled": 0,
+        "enabled": 1,
         "skip_text": "رد کردن",
         "next_text": "بعدی",
         "prev_text": "قبلی",
@@ -128,7 +128,7 @@
     "vpn": {
         "enabled": 0,
         "top_title": "توجه مهم",
-        "top_subtitle": "",
+        "top_subtitle": "تست۱",
         "default_bg": "#fff7f5",
         "footnote": "در صورت روشن بودن فیلترشکن، ممکن است اپ به‌درستی کار نکند.",
         "show_recheck": 0,
@@ -170,17 +170,17 @@
         "url_home": "https://rosha-24.ir/app/app1/",
         "user_agent": "custom",
         "user_agent_custom": "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-        "progress_bar": 0,
-        "progress_color": "#fb7185",
+        "progress_bar": 1,
+        "progress_color": "#0000ff",
         "progress_height": 3,
         "zoom_enabled": 0,
         "js_enabled": 1,
         "dom_storage": 1,
         "database": 1,
         "geolocation": 1,
-        "file_upload": 0,
-        "camera": 0,
-        "microphone": 0,
+        "file_upload": 1,
+        "camera": 1,
+        "microphone": 1,
         "pull_to_refresh": 1,
         "pull_text": "برای بروزرسانی بکش",
         "pull_release": "رها کن تا بروزرسانی شود",
@@ -271,7 +271,7 @@
         "radius": 16,
         "border_width": 0,
         "icon": "🚪",
-        "title": "خروج از اپ",
+        "title": "خروج از مومو",
         "title_color": "#831843",
         "text": "میخوای خارج بشی؟",
         "text_color": "#b45309",
@@ -302,11 +302,11 @@
         "auto_build": 1,
         "description": "تایید شده توسط رایان ساز",
         "developer_name": "rayan,saz",
-        "developer_email": "",
-        "website": ""
+        "developer_email": "rayansaz@gmail.com",
+        "website": "www.google.com"
     },
     "_meta": {
-        "saved_at": "2026-10-10 01:24:37",
+        "saved_at": "2026-10-10 03:20:59",
         "saved_by": "admin"
     }
 }
