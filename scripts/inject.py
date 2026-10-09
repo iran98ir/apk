@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 # =========================================================
-# inject.py — JSON به کد
+# inject.py — JSON به Config.java + resources
 # مسیر: scripts/inject.py
-# =========================================================
-# این اسکریپت قبل از build اجرا می‌شه:
-# 1. config/app01.json رو می‌خونه
-# 2. اگه فیلدی خالی/ناقص باشه → خطا می‌ده و build متوقف می‌شه
-# 3. اگه همه‌چی درست باشه → مقادیر رو توی فایل‌های XML/Java می‌ذاره
-# 4. فایل‌های جاوا رو از app/vista/ به مسیر جدید (بر اساس package_name) منتقل می‌کنه
 # =========================================================
 
 import json
@@ -17,20 +11,15 @@ import sys
 from pathlib import Path
 
 
-# =========================================================
-# مسیرها
-# =========================================================
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "config" / "app01.json"
 ASSETS_DIR = ROOT / "assets"
 RES_DIR = ROOT / "app" / "src" / "main" / "res"
 JAVA_SRC_DIR = ROOT / "app" / "src" / "main" / "java"
 GRADLE_APP = ROOT / "app" / "build.gradle"
+PKG_OLD = "app.vista"
 
 
-# =========================================================
-# فیلدهای اجباری
-# =========================================================
 REQUIRED_FIELDS = [
     "branding.app_name",
     "branding.package_name",
@@ -41,338 +30,523 @@ REQUIRED_FIELDS = [
     "colors.color_text",
     "colors.color_button",
     "colors.color_button_text",
-    "colors.color_accent",
-    "splash.enabled",
-    "splash.title",
-    "splash.subtitle",
     "webview.url",
     "advanced.min_sdk",
     "advanced.target_sdk",
 ]
 
 
-def log(msg):
-    print(f"[inject] {msg}")
+def log(m):
+    print(f"[inject] {m}")
 
 
-def fail(msg):
-    print(f"\n❌ خطا: {msg}\n")
+def fail(m):
+    print(f"\n[ERROR] {m}\n")
     sys.exit(1)
 
 
-def get(data, path):
+def get(d, path, default=None):
     keys = path.split(".")
-    cur = data
+    cur = d
     for k in keys:
         if not isinstance(cur, dict) or k not in cur:
-            return None
+            return default
         cur = cur[k]
     return cur
 
 
-def require(data):
-    missing = []
-    for field in REQUIRED_FIELDS:
-        val = get(data, field)
-        if val is None or (isinstance(val, str) and val.strip() == ""):
-            missing.append(field)
-    if missing:
-        fail(
-            "این فیلدهای اجباری توی app01.json نیستن یا خالی‌ان:\n  - "
-            + "\n  - ".join(missing)
-        )
+def require(d):
+    miss = []
+    for f in REQUIRED_FIELDS:
+        v = get(d, f)
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+            miss.append(f)
+    if miss:
+        fail("فیلدهای اجباری خالی:\n  - " + "\n  - ".join(miss))
 
 
-def hex_to_android(hex_color):
-    h = hex_color.strip().lstrip("#")
+def hex_to_android(h):
+    h = h.strip().lstrip("#")
     if len(h) == 6:
         return f"#FF{h.upper()}"
     if len(h) == 8:
         return f"#{h.upper()}"
-    fail(f"رنگ نامعتبر: {hex_color}")
+    fail(f"رنگ نامعتبر: {h}")
 
 
-def esc(s):
+def esc_xml(s):
     if s is None:
         return ""
-    text = str(s)
-    return (text
+    return (str(s)
             .replace("&", "&amp;")
             .replace("<", "&lt;")
             .replace(">", "&gt;"))
 
 
-# =========================================================
-# جابجایی فایل‌های جاوا (بر اساس package_name)
-# =========================================================
-def move_java_files(package_name):
-    """فایل‌های جاوا رو از app/vista/ به مسیر جدید منتقل می‌کنه
-    و package رو توشون عوض می‌کنه."""
-    old_dir = JAVA_SRC_DIR / "app" / "vista"
-    new_dir = JAVA_SRC_DIR / package_name.replace(".", "/")
+def esc_java(s):
+    if s is None:
+        return ""
+    return (str(s)
+            .replace("\\", "\\\\")
+            .replace('"', '\\"')
+            .replace("\n", "\\n")
+            .replace("\r", ""))
 
-    if not old_dir.exists():
-        log(f"⚠️ پوشه‌ی قدیمی پیدا نشد: {old_dir}")
-        return
 
-    new_dir.mkdir(parents=True, exist_ok=True)
+def javastr(s):
+    return '"' + esc_java(s) + '"'
 
-    # فایل‌های جاوا
-    java_files = list(old_dir.glob("*.java"))
 
-    for src_file in java_files:
-        dst_file = new_dir / src_file.name
-        content = src_file.read_text(encoding="utf-8")
-        # عوض کردن package
-        content = re.sub(
-            r'^package\s+app\.vista\s*;',
-            f'package {package_name};',
-            content,
-            flags=re.MULTILINE
-        )
-        # عوض کردن import ها
-        content = re.sub(
-            r'import\s+app\.vista\.',
-            f'import {package_name}.',
-            content
-        )
-        dst_file.write_text(content, encoding="utf-8")
-        log(f"✅ {src_file.name} → {new_dir.relative_to(JAVA_SRC_DIR)}/{src_file.name}")
+def javabool(v):
+    return "true" if v in (1, True, "1", "true", "True") else "false"
 
-    # پاک کردن پوشه‌ی قدیمی
-    shutil.rmtree(old_dir)
-    log(f"✅ پوشه‌ی قدیمی حذف شد: app/vista")
+
+def javaint(v, default=0):
+    try:
+        return str(int(v))
+    except Exception:
+        return str(default)
+
+
+def javafloat(v, default=0.5):
+    try:
+        return str(float(v))
+    except Exception:
+        return str(default)
+
+
+def color_java(h):
+    return hex_to_android(h)
 
 
 # =========================================================
-# نوشتن colors.xml
+# Config.java
 # =========================================================
-def write_colors(data):
-    path = RES_DIR / "values" / "colors.xml"
+def write_config_java(data, pkg):
+    path = JAVA_SRC_DIR / pkg.replace(".", "/") / "Config.java"
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    c = data["colors"]
-    splash = data.get("splash", {})
-    welcome = data.get("welcome", {})
-    errors = data.get("errors", {})
-    exit_cfg = data.get("exit", {})
-    onboarding = data.get("onboarding", {})
+    b = data.get("branding", {})
+    c = data.get("colors", {})
+    f = data.get("fonts", {})
+    s = data.get("splash", {})
+    o = data.get("onboarding", {})
+    w = data.get("welcome", {})
+    v = data.get("vpn", {})
+    wv = data.get("webview", {})
+    e = data.get("errors", {})
+    ex = data.get("exit", {})
+    adv = data.get("advanced", {})
 
-    colors = {
-        "color_primary": hex_to_android(c["color_primary"]),
-        "color_background": hex_to_android(c["color_background"]),
-        "color_text": hex_to_android(c["color_text"]),
-        "color_text_secondary": hex_to_android(c.get("color_text_secondary", c["color_text"])),
-        "color_button": hex_to_android(c["color_button"]),
-        "color_button_text": hex_to_android(c["color_button_text"]),
-        "color_accent": hex_to_android(c["color_accent"]),
-        "bg_main": hex_to_android(c["color_background"]),
-        "bg_surface": hex_to_android(c["color_background"]),
-        "text_primary": hex_to_android(c["color_text"]),
-        "text_secondary": hex_to_android(c.get("color_text_secondary", c["color_text"])),
-        "text_inverse": hex_to_android(c["color_button_text"]),
-        "transparent": "#00000000",
-    }
+    L = []
+    L.append(f"package {pkg};")
+    L.append("")
+    L.append("// =====================================================")
+    L.append("// Config.java — همه‌ی تنظیمات از app01.json")
+    L.append("// این فایل خودکار توسط inject.py ساخته میشه")
+    L.append("// =====================================================")
+    L.append("public final class Config {")
+    L.append("    private Config() {}")
+    L.append("")
+    L.append("    // ===== BRANDING =====")
+    L.append(f"    public static final String APP_NAME = {javastr(b.get('app_name',''))};")
+    L.append(f"    public static final String APP_NAME_EN = {javastr(b.get('app_name_en',''))};")
+    L.append(f"    public static final String PACKAGE_NAME = {javastr(b.get('package_name',''))};")
+    L.append(f"    public static final int VERSION_CODE = {javaint(b.get('version_code',1),1)};")
+    L.append(f"    public static final String VERSION_NAME = {javastr(b.get('version_name','1.0.0'))};")
+    L.append(f"    public static final boolean IS_NEW_APP = {javabool(b.get('is_new_app',0))};")
+    L.append("")
+    L.append("    // ===== COLORS =====")
+    for k in ["color_primary","color_background","color_text","color_text_secondary",
+              "color_button","color_button_text","color_accent"]:
+        L.append(f"    public static final String {k.upper()} = {javastr(color_java(c.get(k,'#000000')))};")
+    L.append(f"    public static final String BG_TYPE = {javastr(c.get('bg_type','solid'))};")
+    L.append(f"    public static final String BG_COLOR_SOLID = {javastr(color_java(c.get('bg_color_solid', c.get('bg_color_1','#000000'))))};")
+    L.append(f"    public static final String BG_COLOR_1 = {javastr(color_java(c.get('bg_color_1','#000000')))};")
+    L.append(f"    public static final String BG_COLOR_2 = {javastr(color_java(c.get('bg_color_2','#000000')))};")
+    L.append(f"    public static final int BG_GRADIENT_ANGLE = {javaint(c.get('bg_gradient_angle',180),180)};")
+    L.append(f"    public static final String BG_EFFECT = {javastr(c.get('bg_effect','none'))};")
+    L.append(f"    public static final float BG_EFFECT_OPACITY = {javafloat(c.get('bg_effect_opacity',0.5),0.5)}f;")
+    L.append("")
+    L.append("    // ===== FONTS =====")
+    L.append(f"    public static final String FONT_FAMILY = {javastr(f.get('font_family','sans-serif'))};")
+    L.append(f"    public static final int FONT_WEIGHT = {javaint(f.get('font_weight',400),400)};")
+    L.append(f"    public static final int FONT_SIZE_BASE = {javaint(f.get('font_size_base',16),16)};")
+    L.append(f"    public static final int TITLE_SIZE = {javaint(f.get('title_size',24),24)};")
+    L.append(f"    public static final int TITLE_WEIGHT = {javaint(f.get('title_weight',800),800)};")
+    L.append(f"    public static final int SUBTITLE_SIZE = {javaint(f.get('subtitle_size',18),18)};")
+    L.append(f"    public static final int SUBTITLE_WEIGHT = {javaint(f.get('subtitle_weight',600),600)};")
+    L.append(f"    public static final int BODY_SIZE = {javaint(f.get('body_size',14),14)};")
+    L.append(f"    public static final int BODY_WEIGHT = {javaint(f.get('body_weight',400),400)};")
+    L.append(f"    public static final int BUTTON_SIZE = {javaint(f.get('button_size',16),16)};")
+    L.append(f"    public static final int BUTTON_WEIGHT = {javaint(f.get('button_weight',800),800)};")
+    L.append(f"    public static final String ANIM_TITLE = {javastr(f.get('anim_title','fadeUp'))};")
+    L.append(f"    public static final String ANIM_TEXT = {javastr(f.get('anim_text','fadeUp'))};")
+    L.append(f"    public static final String ANIM_BTN = {javastr(f.get('anim_btn','scale'))};")
+    L.append(f"    public static final int ANIM_DURATION = {javaint(f.get('anim_duration',500),500)};")
+    L.append(f"    public static final int ANIM_DELAY = {javaint(f.get('anim_delay',100),100)};")
+    L.append("")
+    L.append("    // ===== SPLASH =====")
+    L.append(f"    public static final boolean SPLASH_ENABLED = {javabool(s.get('enabled',1))};")
+    L.append(f"    public static final int SPLASH_DURATION = {javaint(s.get('duration',2000),2000)};")
+    L.append(f"    public static final String SPLASH_BG_TYPE = {javastr(s.get('bg_type','gradient'))};")
+    L.append(f"    public static final String SPLASH_BG_COLOR_SOLID = {javastr(color_java(s.get('bg_color_solid', s.get('bg_color_1','#000000'))))};")
+    L.append(f"    public static final String SPLASH_BG_COLOR_1 = {javastr(color_java(s.get('bg_color_1','#000000')))};")
+    L.append(f"    public static final String SPLASH_BG_COLOR_2 = {javastr(color_java(s.get('bg_color_2','#000000')))};")
+    L.append(f"    public static final int SPLASH_LOGO_SIZE = {javaint(s.get('logo_size',180),180)};")
+    L.append(f"    public static final String SPLASH_LOGO_ANIM = {javastr(s.get('logo_anim','pulse'))};")
+    L.append(f"    public static final String SPLASH_TITLE = {javastr(s.get('title',''))};")
+    L.append(f"    public static final int SPLASH_TITLE_SIZE = {javaint(s.get('title_size',28),28)};")
+    L.append(f"    public static final String SPLASH_TITLE_COLOR = {javastr(color_java(s.get('title_color','#FFFFFF')))};")
+    L.append(f"    public static final String SPLASH_TITLE_ANIM = {javastr(s.get('title_anim','fadeUp'))};")
+    L.append(f"    public static final String SPLASH_SUBTITLE = {javastr(s.get('subtitle',''))};")
+    L.append(f"    public static final int SPLASH_SUBTITLE_SIZE = {javaint(s.get('subtitle_size',16),16)};")
+    L.append(f"    public static final String SPLASH_SUBTITLE_COLOR = {javastr(color_java(s.get('subtitle_color','#FFFFFF')))};")
+    L.append(f"    public static final String SPLASH_SUBTITLE_ANIM = {javastr(s.get('subtitle_anim','fadeUp'))};")
+    L.append(f"    public static final String SPLASH_LOADER_TYPE = {javastr(s.get('loader_type','dots'))};")
+    L.append(f"    public static final String SPLASH_LOADER_COLOR = {javastr(color_java(s.get('loader_color','#FFFFFF')))};")
+    L.append(f"    public static final boolean SPLASH_SHOW_LOADER = {javabool(s.get('show_loader',1))};")
+    L.append("")
+    L.append("    // ===== ONBOARDING =====")
+    L.append(f"    public static final boolean ONB_ENABLED = {javabool(o.get('enabled',0))};")
+    L.append(f"    public static final String ONB_SKIP_TEXT = {javastr(o.get('skip_text','رد کردن'))};")
+    L.append(f"    public static final String ONB_NEXT_TEXT = {javastr(o.get('next_text','بعدی'))};")
+    L.append(f"    public static final String ONB_PREV_TEXT = {javastr(o.get('prev_text','قبلی'))};")
+    L.append(f"    public static final String ONB_START_TEXT = {javastr(o.get('start_text','شروع کن'))};")
+    L.append(f"    public static final String ONB_BTN_BG = {javastr(color_java(o.get('btn_bg','#000000')))};")
+    L.append(f"    public static final String ONB_BTN_TEXT_COLOR = {javastr(color_java(o.get('btn_text_color','#FFFFFF')))};")
+    L.append(f"    public static final String ONB_DOT_ACTIVE = {javastr(color_java(o.get('dot_active','#FFFFFF')))};")
+    L.append(f"    public static final String ONB_DOT_INACTIVE = {javastr(color_java(o.get('dot_inactive','#888888')))};")
+    for n in (1, 2, 3):
+        p = f"s{n}_"
+        L.append(f"    public static final boolean ONB_S{n}_ENABLED = {javabool(o.get(p+'enabled',1))};")
+        L.append(f"    public static final String ONB_S{n}_BG_TYPE = {javastr(o.get(p+'bg_type','solid'))};")
+        L.append(f"    public static final String ONB_S{n}_BG_SOLID = {javastr(color_java(o.get(p+'bg_solid', o.get(p+'bg_1','#000000'))))};")
+        L.append(f"    public static final String ONB_S{n}_BG_1 = {javastr(color_java(o.get(p+'bg_1','#000000')))};")
+        L.append(f"    public static final String ONB_S{n}_BG_2 = {javastr(color_java(o.get(p+'bg_2','#000000')))};")
+        L.append(f"    public static final String ONB_S{n}_TITLE = {javastr(o.get(p+'title',''))};")
+        L.append(f"    public static final String ONB_S{n}_TITLE_COLOR = {javastr(color_java(o.get(p+'title_color','#FFFFFF')))};")
+        L.append(f"    public static final String ONB_S{n}_TEXT = {javastr(o.get(p+'text',''))};")
+        L.append(f"    public static final String ONB_S{n}_TEXT_COLOR = {javastr(color_java(o.get(p+'text_color','#FFFFFF')))};")
+    L.append("")
+    L.append("    // ===== WELCOME =====")
+    L.append(f"    public static final boolean WELCOME_ENABLED = {javabool(w.get('enabled',0))};")
+    L.append(f"    public static final String WELCOME_TITLE = {javastr(w.get('title',''))};")
+    L.append(f"    public static final String WELCOME_SUBTITLE = {javastr(w.get('subtitle',''))};")
+    L.append(f"    public static final String WELCOME_ICON = {javastr(w.get('icon',''))};")
+    L.append(f"    public static final String WELCOME_BUTTON_TEXT = {javastr(w.get('button_text','ورود'))};")
+    L.append(f"    public static final String WELCOME_BUTTON_BG = {javastr(color_java(w.get('button_bg','#000000')))};")
+    L.append(f"    public static final String WELCOME_BUTTON_TEXT_COLOR = {javastr(color_java(w.get('button_text_color','#FFFFFF')))};")
+    L.append(f"    public static final String WELCOME_BG_COLOR = {javastr(color_java(w.get('bg_color','#000000')))};")
+    L.append(f"    public static final String WELCOME_TITLE_COLOR = {javastr(color_java(w.get('title_color','#FFFFFF')))};")
+    L.append(f"    public static final String WELCOME_SUBTITLE_COLOR = {javastr(color_java(w.get('subtitle_color','#FFFFFF')))};")
+    L.append("")
+    L.append("    // ===== VPN =====")
+    L.append(f"    public static final boolean VPN_ENABLED = {javabool(v.get('enabled',0))};")
+    L.append(f"    public static final String VPN_TOP_TITLE = {javastr(v.get('top_title',''))};")
+    L.append(f"    public static final String VPN_TOP_SUBTITLE = {javastr(v.get('top_subtitle',''))};")
+    L.append(f"    public static final String VPN_FOOTNOTE = {javastr(v.get('footnote',''))};")
+    L.append(f"    public static final boolean VPN_SHOW_RECHECK = {javabool(v.get('show_recheck',0))};")
+    on = v.get("state_on", {})
+    L.append(f"    public static final String VPN_ON_ICON = {javastr(on.get('icon',''))};")
+    L.append(f"    public static final String VPN_ON_TITLE = {javastr(on.get('title',''))};")
+    L.append(f"    public static final String VPN_ON_TEXT = {javastr(on.get('text',''))};")
+    L.append(f"    public static final String VPN_ON_COLOR = {javastr(color_java(on.get('color','#FFFFFF')))};")
+    L.append(f"    public static final String VPN_ON_BG = {javastr(color_java(on.get('bg','#000000')))};")
+    L.append(f"    public static final String VPN_ON_BTN = {javastr(on.get('btn','ورود'))};")
+    off = v.get("state_off", {})
+    L.append(f"    public static final String VPN_OFF_ICON = {javastr(off.get('icon',''))};")
+    L.append(f"    public static final String VPN_OFF_TITLE = {javastr(off.get('title',''))};")
+    L.append(f"    public static final String VPN_OFF_TEXT = {javastr(off.get('text',''))};")
+    L.append(f"    public static final String VPN_OFF_COLOR = {javastr(color_java(off.get('color','#FFFFFF')))};")
+    L.append(f"    public static final String VPN_OFF_BG = {javastr(color_java(off.get('bg','#000000')))};")
+    L.append(f"    public static final String VPN_OFF_BTN = {javastr(off.get('btn','ورود'))};")
+    unk = v.get("state_unknown", {})
+    L.append(f"    public static final String VPN_UNK_ICON = {javastr(unk.get('icon',''))};")
+    L.append(f"    public static final String VPN_UNK_TITLE = {javastr(unk.get('title',''))};")
+    L.append(f"    public static final String VPN_UNK_TEXT = {javastr(unk.get('text',''))};")
+    L.append(f"    public static final String VPN_UNK_COLOR = {javastr(color_java(unk.get('color','#FFFFFF')))};")
+    L.append(f"    public static final String VPN_UNK_BG = {javastr(color_java(unk.get('bg','#000000')))};")
+    L.append(f"    public static final String VPN_UNK_BTN = {javastr(unk.get('btn','ورود'))};")
+    rc = v.get("recheck", {})
+    L.append(f"    public static final String VPN_RECHECK_TEXT = {javastr(rc.get('text',''))};")
+    L.append(f"    public static final String VPN_RECHECK_BG = {javastr(color_java(rc.get('bg','#000000')))};")
+    L.append(f"    public static final String VPN_RECHECK_BORDER = {javastr(color_java(rc.get('border','#FFFFFF')))};")
+    L.append(f"    public static final String VPN_RECHECK_COLOR = {javastr(color_java(rc.get('color','#FFFFFF')))};")
+    L.append("")
+    L.append("    // ===== WEBVIEW =====")
+    L.append(f"    public static final String WV_URL = {javastr(wv.get('url',''))};")
+    L.append(f"    public static final String WV_URL_TYPE = {javastr(wv.get('url_type','single'))};")
+    L.append(f"    public static final String WV_URL_DEEP_LINK = {javastr(wv.get('url_deep_link',''))};")
+    L.append(f"    public static final String WV_URL_HOME = {javastr(wv.get('url_home',''))};")
+    L.append(f"    public static final String WV_USER_AGENT = {javastr(wv.get('user_agent','auto'))};")
+    L.append(f"    public static final String WV_USER_AGENT_CUSTOM = {javastr(wv.get('user_agent_custom',''))};")
+    L.append(f"    public static final boolean WV_PROGRESS_BAR = {javabool(wv.get('progress_bar',1))};")
+    L.append(f"    public static final String WV_PROGRESS_COLOR = {javastr(color_java(wv.get('progress_color','#FFFFFF')))};")
+    L.append(f"    public static final int WV_PROGRESS_HEIGHT = {javaint(wv.get('progress_height',3),3)};")
+    L.append(f"    public static final boolean WV_ZOOM = {javabool(wv.get('zoom_enabled',0))};")
+    L.append(f"    public static final boolean WV_JS = {javabool(wv.get('js_enabled',1))};")
+    L.append(f"    public static final boolean WV_DOM = {javabool(wv.get('dom_storage',1))};")
+    L.append(f"    public static final boolean WV_DATABASE = {javabool(wv.get('database',1))};")
+    L.append(f"    public static final boolean WV_GEOLOCATION = {javabool(wv.get('geolocation',0))};")
+    L.append(f"    public static final boolean WV_FILE_UPLOAD = {javabool(wv.get('file_upload',0))};")
+    L.append(f"    public static final boolean WV_CAMERA = {javabool(wv.get('camera',0))};")
+    L.append(f"    public static final boolean WV_MIC = {javabool(wv.get('microphone',0))};")
+    L.append(f"    public static final boolean WV_PULL_REFRESH = {javabool(wv.get('pull_to_refresh',1))};")
+    L.append(f"    public static final String WV_PULL_TEXT = {javastr(wv.get('pull_text',''))};")
+    L.append(f"    public static final String WV_PULL_RELEASE = {javastr(wv.get('pull_release',''))};")
+    L.append(f"    public static final String WV_PULL_LOADING = {javastr(wv.get('pull_loading',''))};")
+    L.append(f"    public static final String WV_PULL_COLOR = {javastr(color_java(wv.get('pull_color','#FFFFFF')))};")
+    L.append(f"    public static final boolean WV_BACK_BUTTON = {javabool(wv.get('back_button',1))};")
+    L.append(f"    public static final String WV_BACK_EXIT_MSG = {javastr(wv.get('back_exit_msg',''))};")
+    L.append(f"    public static final boolean WV_BACK_DOUBLE = {javabool(wv.get('back_double',1))};")
+    L.append(f"    public static final String WV_EXTERNAL_LINKS = {javastr(wv.get('external_links','inapp'))};")
+    L.append(f"    public static final String WV_MAIL_LINKS = {javastr(wv.get('mail_links','inapp'))};")
+    L.append(f"    public static final String WV_TEL_LINKS = {javastr(wv.get('tel_links','inapp'))};")
+    L.append(f"    public static final String WV_WHATSAPP_LINKS = {javastr(wv.get('whatsapp_links','inapp'))};")
+    L.append(f"    public static final String WV_TELEGRAM_LINKS = {javastr(wv.get('telegram_links','inapp'))};")
+    L.append(f"    public static final String WV_INSTAGRAM_LINKS = {javastr(wv.get('instagram_links','inapp'))};")
+    L.append(f"    public static final int WV_TIMEOUT = {javaint(wv.get('timeout',30000),30000)};")
+    L.append(f"    public static final int WV_RETRY_COUNT = {javaint(wv.get('retry_count',2),2)};")
+    L.append(f"    public static final boolean WV_CACHE = {javabool(wv.get('cache_enabled',1))};")
+    L.append(f"    public static final String WV_CACHE_MODE = {javastr(wv.get('cache_mode','default'))};")
+    L.append(f"    public static final boolean WV_SAFE_BROWSING = {javabool(wv.get('safe_browsing',0))};")
+    L.append(f"    public static final boolean WV_BLOCK_ADS = {javabool(wv.get('block_ads',0))};")
+    L.append(f"    public static final boolean WV_SHOW_SPLASH_ON_WEBVIEW = {javabool(wv.get('show_splash_on_webview',0))};")
+    L.append("")
+    L.append("    // ===== ERRORS =====")
+    L.append(f"    public static final boolean ERR_ENABLED = {javabool(e.get('enabled',1))};")
+    L.append(f"    public static final boolean ERR_SHOW_RETRY = {javabool(e.get('show_retry',1))};")
+    L.append(f"    public static final boolean ERR_SHOW_HOME = {javabool(e.get('show_home',0))};")
+    L.append(f"    public static final boolean ERR_AUTO_RETRY = {javabool(e.get('auto_retry',1))};")
+    L.append(f"    public static final int ERR_AUTO_RETRY_SEC = {javaint(e.get('auto_retry_sec',5),5)};")
+    L.append(f"    public static final String ERR_RETRY_TEXT = {javastr(e.get('retry_text','🔄 تلاش مجدد'))};")
+    L.append(f"    public static final String ERR_RETRY_BG = {javastr(color_java(e.get('retry_bg','#000000')))};")
+    L.append(f"    public static final String ERR_RETRY_COLOR = {javastr(color_java(e.get('retry_color','#FFFFFF')))};")
+    L.append(f"    public static final String ERR_HOME_TEXT = {javastr(e.get('home_text','🏠 بازگشت به خانه'))};")
+    L.append(f"    public static final String ERR_HOME_BG = {javastr(e.get('home_bg','transparent'))};")
+    L.append(f"    public static final String ERR_HOME_COLOR = {javastr(color_java(e.get('home_color','#FFFFFF')))};")
+    L.append(f"    public static final String ERR_HOME_BORDER = {javastr(color_java(e.get('home_border','#FFFFFF')))};")
+    for t in ["offline","server","nf","fb","to","dns","ssl","conn","unk"]:
+        T = t.upper()
+        L.append(f"    public static final String ERR_{T}_ICON = {javastr(e.get(t+'_icon',''))};")
+        L.append(f"    public static final String ERR_{T}_TITLE = {javastr(e.get(t+'_title',''))};")
+        L.append(f"    public static final String ERR_{T}_TEXT = {javastr(e.get(t+'_text',''))};")
+        L.append(f"    public static final String ERR_{T}_COLOR = {javastr(color_java(e.get(t+'_color','#FFFFFF')))};")
+        L.append(f"    public static final String ERR_{T}_BG = {javastr(color_java(e.get(t+'_bg','#000000')))};")
+    L.append("")
+    L.append("    // ===== EXIT =====")
+    L.append(f"    public static final boolean EXIT_ENABLED = {javabool(ex.get('enabled',1))};")
+    L.append(f"    public static final boolean EXIT_DOUBLE_BACK = {javabool(ex.get('double_back',1))};")
+    L.append(f"    public static final String EXIT_DOUBLE_BACK_MSG = {javastr(ex.get('double_back_msg',''))};")
+    L.append(f"    public static final boolean EXIT_SHOW_ICON = {javabool(ex.get('show_icon',1))};")
+    L.append(f"    public static final String EXIT_DIALOG_TYPE = {javastr(ex.get('dialog_type','classic'))};")
+    L.append(f"    public static final int EXIT_RADIUS = {javaint(ex.get('radius',16),16)};")
+    L.append(f"    public static final int EXIT_BORDER_WIDTH = {javaint(ex.get('border_width',0),0)};")
+    L.append(f"    public static final String EXIT_ICON = {javastr(ex.get('icon',''))};")
+    L.append(f"    public static final String EXIT_TITLE = {javastr(ex.get('title',''))};")
+    L.append(f"    public static final String EXIT_TITLE_COLOR = {javastr(color_java(ex.get('title_color','#FFFFFF')))};")
+    L.append(f"    public static final String EXIT_TEXT = {javastr(ex.get('text',''))};")
+    L.append(f"    public static final String EXIT_TEXT_COLOR = {javastr(color_java(ex.get('text_color','#FFFFFF')))};")
+    L.append(f"    public static final String EXIT_BG_COLOR = {javastr(color_java(ex.get('bg_color','#000000')))};")
+    L.append(f"    public static final String EXIT_BORDER_COLOR = {javastr(color_java(ex.get('border_color','#FFFFFF')))};")
+    L.append(f"    public static final String EXIT_OVERLAY_COLOR = {javastr(ex.get('overlay_color','rgba(0,0,0,0.6)'))};")
+    L.append(f"    public static final String EXIT_BTN_CONFIRM_TEXT = {javastr(ex.get('btn_confirm_text','بله، خروج'))};")
+    L.append(f"    public static final String EXIT_BTN_CONFIRM_BG = {javastr(color_java(ex.get('btn_confirm_bg','#000000')))};")
+    L.append(f"    public static final String EXIT_BTN_CONFIRM_COLOR = {javastr(color_java(ex.get('btn_confirm_color','#FFFFFF')))};")
+    L.append(f"    public static final String EXIT_BTN_CANCEL_TEXT = {javastr(ex.get('btn_cancel_text','نه، بمون'))};")
+    L.append(f"    public static final String EXIT_BTN_CANCEL_BG = {javastr(color_java(ex.get('btn_cancel_bg','#000000')))};")
+    L.append(f"    public static final String EXIT_BTN_CANCEL_COLOR = {javastr(color_java(ex.get('btn_cancel_color','#FFFFFF')))};")
+    L.append(f"    public static final String EXIT_BTN_LAYOUT = {javastr(ex.get('btn_layout','horizontal'))};")
+    L.append("")
+    L.append("    // ===== ADVANCED =====")
+    L.append(f"    public static final String ADV_OUTPUT_NAME = {javastr(adv.get('output_name',''))};")
+    L.append(f"    public static final String ADV_OUTPUT_FORMAT = {javastr(adv.get('output_format','apk'))};")
+    L.append(f"    public static final int ADV_MIN_SDK = {javaint(adv.get('min_sdk',24),24)};")
+    L.append(f"    public static final int ADV_TARGET_SDK = {javaint(adv.get('target_sdk',34),34)};")
+    L.append(f"    public static final String ADV_ARCHITECTURE = {javastr(adv.get('architecture','universal'))};")
+    L.append(f"    public static final String ADV_DEVELOPER_NAME = {javastr(adv.get('developer_name',''))};")
+    L.append(f"    public static final String ADV_DEVELOPER_EMAIL = {javastr(adv.get('developer_email',''))};")
+    L.append(f"    public static final String ADV_WEBSITE = {javastr(adv.get('website',''))};")
+    L.append(f"    public static final String ADV_DESCRIPTION = {javastr(adv.get('description',''))};")
+    L.append("}")
 
-    if splash.get("bg_color_1"):
-        colors["splash_bg_1"] = hex_to_android(splash["bg_color_1"])
-    if splash.get("bg_color_2"):
-        colors["splash_bg_2"] = hex_to_android(splash["bg_color_2"])
-    if splash.get("bg_color_solid"):
-        colors["splash_bg_solid"] = hex_to_android(splash["bg_color_solid"])
-    if splash.get("title_color"):
-        colors["splash_title_color"] = hex_to_android(splash["title_color"])
-    if splash.get("subtitle_color"):
-        colors["splash_subtitle_color"] = hex_to_android(splash["subtitle_color"])
-    if splash.get("loader_color"):
-        colors["splash_loader_color"] = hex_to_android(splash["loader_color"])
-
-    if welcome.get("bg_color"):
-        colors["welcome_bg"] = hex_to_android(welcome["bg_color"])
-    if welcome.get("title_color"):
-        colors["welcome_title_color"] = hex_to_android(welcome["title_color"])
-    if welcome.get("subtitle_color"):
-        colors["welcome_subtitle_color"] = hex_to_android(welcome["subtitle_color"])
-    if welcome.get("button_bg"):
-        colors["welcome_btn_bg"] = hex_to_android(welcome["button_bg"])
-    if welcome.get("button_text_color"):
-        colors["welcome_btn_text"] = hex_to_android(welcome["button_text_color"])
-
-    if errors.get("retry_bg"):
-        colors["error_retry_bg"] = hex_to_android(errors["retry_bg"])
-    if errors.get("retry_color"):
-        colors["error_retry_text"] = hex_to_android(errors["retry_color"])
-    if errors.get("offline_bg"):
-        colors["error_bg"] = hex_to_android(errors["offline_bg"])
-    if errors.get("offline_color"):
-        colors["error_title_color"] = hex_to_android(errors["offline_color"])
-
-    if exit_cfg.get("bg_color"):
-        colors["exit_bg"] = hex_to_android(exit_cfg["bg_color"])
-    if exit_cfg.get("title_color"):
-        colors["exit_title_color"] = hex_to_android(exit_cfg["title_color"])
-    if exit_cfg.get("text_color"):
-        colors["exit_text_color"] = hex_to_android(exit_cfg["text_color"])
-    if exit_cfg.get("btn_confirm_bg"):
-        colors["exit_confirm_bg"] = hex_to_android(exit_cfg["btn_confirm_bg"])
-    if exit_cfg.get("btn_confirm_color"):
-        colors["exit_confirm_text"] = hex_to_android(exit_cfg["btn_confirm_color"])
-    if exit_cfg.get("btn_cancel_bg"):
-        colors["exit_cancel_bg"] = hex_to_android(exit_cfg["btn_cancel_bg"])
-    if exit_cfg.get("btn_cancel_color"):
-        colors["exit_cancel_text"] = hex_to_android(exit_cfg["btn_cancel_color"])
-
-    if onboarding.get("btn_bg"):
-        colors["onb_btn_bg"] = hex_to_android(onboarding["btn_bg"])
-    if onboarding.get("btn_text_color"):
-        colors["onb_btn_text"] = hex_to_android(onboarding["btn_text_color"])
-    if onboarding.get("dot_active"):
-        colors["onb_dot_active"] = hex_to_android(onboarding["dot_active"])
-    if onboarding.get("dot_inactive"):
-        colors["onb_dot_inactive"] = hex_to_android(onboarding["dot_inactive"])
-
-    lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>", ""]
-    for name, val in colors.items():
-        lines.append(f'    <color name="{name}">{val}</color>')
-    lines.append("")
-    lines.append("</resources>")
-    path.write_text("\n".join(lines), encoding="utf-8")
-    log(f"✅ colors.xml نوشته شد ({len(colors)} رنگ)")
+    path.write_text("\n".join(L), encoding="utf-8")
+    log(f"✅ Config.java نوشته شد ({len(L)} خط)")
 
 
 # =========================================================
-# نوشتن strings.xml
+# strings.xml + colors.xml + dimens.xml + styles.xml
 # =========================================================
 def write_strings(data):
     path = RES_DIR / "values" / "strings.xml"
     path.parent.mkdir(parents=True, exist_ok=True)
-
-    b = data["branding"]
-    splash = data.get("splash", {})
-    welcome = data.get("welcome", {})
-    errors = data.get("errors", {})
-    exit_cfg = data.get("exit", {})
-    webview = data.get("webview", {})
-    onboarding = data.get("onboarding", {})
-    vpn = data.get("vpn", {})
-
-    strings = {
-        "app_name": esc(b["app_name"]),
-        "base_url": esc(webview.get("url", "")),
-        "splash_title": esc(splash.get("title", "")),
-        "splash_subtitle": esc(splash.get("subtitle", "")),
-        "splash_loading": esc("در حال آماده‌سازی…"),
-        "welcome_title": esc(welcome.get("title", "")),
-        "welcome_subtitle": esc(welcome.get("subtitle", "")),
-        "welcome_button": esc(welcome.get("button_text", "ورود")),
-        "onb_skip": esc(onboarding.get("skip_text", "رد کردن")),
-        "onb_next": esc(onboarding.get("next_text", "بعدی")),
-        "onb_prev": esc(onboarding.get("prev_text", "قبلی")),
-        "onb_start": esc(onboarding.get("start_text", "شروع کن")),
-        "onb_s1_title": esc(onboarding.get("s1_title", "")),
-        "onb_s1_text": esc(onboarding.get("s1_text", "")),
-        "onb_s2_title": esc(onboarding.get("s2_title", "")),
-        "onb_s2_text": esc(onboarding.get("s2_text", "")),
-        "onb_s3_title": esc(onboarding.get("s3_title", "")),
-        "onb_s3_text": esc(onboarding.get("s3_text", "")),
-        "vpn_top_title": esc(vpn.get("top_title", "")),
-        "vpn_top_subtitle": esc(vpn.get("top_subtitle", "")),
-        "vpn_footnote": esc(vpn.get("footnote", "")),
-        "vpn_on_title": esc(vpn.get("state_on", {}).get("title", "")),
-        "vpn_on_text": esc(vpn.get("state_on", {}).get("text", "")),
-        "vpn_on_btn": esc(vpn.get("state_on", {}).get("btn", "")),
-        "vpn_off_title": esc(vpn.get("state_off", {}).get("title", "")),
-        "vpn_off_text": esc(vpn.get("state_off", {}).get("text", "")),
-        "vpn_off_btn": esc(vpn.get("state_off", {}).get("btn", "")),
-        "vpn_unk_title": esc(vpn.get("state_unknown", {}).get("title", "")),
-        "vpn_unk_text": esc(vpn.get("state_unknown", {}).get("text", "")),
-        "vpn_unk_btn": esc(vpn.get("state_unknown", {}).get("btn", "")),
-        "error_retry": esc(errors.get("retry_text", "تلاش مجدد")),
-        "error_offline_title": esc(errors.get("offline_title", "")),
-        "error_offline_text": esc(errors.get("offline_text", "")),
-        "error_server_title": esc(errors.get("server_title", "")),
-        "error_server_text": esc(errors.get("server_text", "")),
-        "error_nf_title": esc(errors.get("nf_title", "")),
-        "error_nf_text": esc(errors.get("nf_text", "")),
-        "error_fb_title": esc(errors.get("fb_title", "")),
-        "error_fb_text": esc(errors.get("fb_text", "")),
-        "error_to_title": esc(errors.get("to_title", "")),
-        "error_to_text": esc(errors.get("to_text", "")),
-        "error_dns_title": esc(errors.get("dns_title", "")),
-        "error_dns_text": esc(errors.get("dns_text", "")),
-        "error_ssl_title": esc(errors.get("ssl_title", "")),
-        "error_ssl_text": esc(errors.get("ssl_text", "")),
-        "error_conn_title": esc(errors.get("conn_title", "")),
-        "error_conn_text": esc(errors.get("conn_text", "")),
-        "error_unk_title": esc(errors.get("unk_title", "")),
-        "error_unk_text": esc(errors.get("unk_text", "")),
-        "exit_title": esc(exit_cfg.get("title", "")),
-        "exit_text": esc(exit_cfg.get("text", "")),
-        "exit_confirm": esc(exit_cfg.get("btn_confirm_text", "بله")),
-        "exit_cancel": esc(exit_cfg.get("btn_cancel_text", "نه")),
-        "back_double_msg": esc(webview.get("back_exit_msg", "")),
-        "pull_text": esc(webview.get("pull_text", "")),
-        "pull_release": esc(webview.get("pull_release", "")),
-        "pull_loading": esc(webview.get("pull_loading", "")),
-    }
-
+    b = data.get("branding", {})
+    items = [
+        ("app_name", b.get("app_name", "App")),
+        ("base_url", data.get("webview", {}).get("url", "")),
+    ]
     lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>", ""]
-    for name, val in strings.items():
-        lines.append(f'    <string name="{name}">{val}</string>')
-    lines.append("")
-    lines.append("</resources>")
+    for k, v in items:
+        lines.append(f'    <string name="{k}">{esc_xml(v)}</string>')
+    lines += ["", "</resources>"]
     path.write_text("\n".join(lines), encoding="utf-8")
-    log(f"✅ strings.xml نوشته شد ({len(strings)} متن)")
+    log("✅ strings.xml نوشته شد")
+
+
+def write_colors(data):
+    path = RES_DIR / "values" / "colors.xml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    c = data.get("colors", {})
+    items = {
+        "color_primary": c.get("color_primary", "#000000"),
+        "color_background": c.get("color_background", "#FFFFFF"),
+        "color_text": c.get("color_text", "#000000"),
+        "color_text_secondary": c.get("color_text_secondary", "#666666"),
+        "color_button": c.get("color_button", "#000000"),
+        "color_button_text": c.get("color_button_text", "#FFFFFF"),
+        "color_accent": c.get("color_accent", "#000000"),
+    }
+    lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>", ""]
+    for k, v in items.items():
+        lines.append(f'    <color name="{k}">{hex_to_android(v)}</color>')
+    lines += ["", "</resources>"]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    log("✅ colors.xml نوشته شد")
+
+
+def write_dimens(data):
+    path = RES_DIR / "values" / "dimens.xml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    f = data.get("fonts", {})
+    s = data.get("splash", {})
+    items = {
+        "font_size_base": f.get("font_size_base", 16),
+        "title_size": f.get("title_size", 24),
+        "subtitle_size": f.get("subtitle_size", 18),
+        "body_size": f.get("body_size", 14),
+        "button_size": f.get("button_size", 16),
+        "splash_logo_size": s.get("logo_size", 180),
+        "splash_title_size": s.get("title_size", 28),
+        "splash_subtitle_size": s.get("subtitle_size", 16),
+    }
+    lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>", ""]
+    for k, v in items.items():
+        try:
+            val = int(v)
+        except Exception:
+            val = 16
+        lines.append(f'    <dimen name="{k}">{val}sp</dimen>')
+    lines += ["", "</resources>"]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    log("✅ dimens.xml نوشته شد")
+
+
+def write_styles(data):
+    path = RES_DIR / "values" / "styles.xml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = """<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.App" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorAccent">@color/color_accent</item>
+        <item name="android:windowBackground">@color/color_background</item>
+        <item name="android:statusBarColor">@color/color_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/color_background</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="Theme.App.Splash" parent="Theme.App">
+        <item name="android:windowBackground">@color/color_background</item>
+        <item name="android:statusBarColor">@color/color_background</item>
+        <item name="android:navigationBarColor">@color/color_background</item>
+    </style>
+</resources>
+"""
+    path.write_text(content, encoding="utf-8")
+    log("✅ styles.xml نوشته شد")
+
+
+# =========================================================
+# جابجایی فایل‌های جاوا
+# =========================================================
+def move_java_files(pkg):
+    old_dir = JAVA_SRC_DIR / PKG_OLD.replace(".", "/")
+    new_dir = JAVA_SRC_DIR / pkg.replace(".", "/")
+
+    if not old_dir.exists():
+        log(f"⚠️ پوشه‌ی قدیمی نیست: {old_dir}")
+        return
+
+    new_dir.mkdir(parents=True, exist_ok=True)
+
+    for src in list(old_dir.glob("*.java")):
+        dst = new_dir / src.name
+        content = src.read_text(encoding="utf-8")
+        content = re.sub(
+            r'^package\s+app\.vista\s*;',
+            f'package {pkg};',
+            content,
+            flags=re.MULTILINE,
+        )
+        content = re.sub(
+            r'import\s+app\.vista\.',
+            f'import {pkg}.',
+            content,
+        )
+        dst.write_text(content, encoding="utf-8")
+        log(f"✅ {src.name} → {new_dir.relative_to(JAVA_SRC_DIR)}/{src.name}")
+
+    shutil.rmtree(old_dir)
+    log("✅ پوشه‌ی قدیمی حذف شد")
 
 
 # =========================================================
 # کپی عکس‌ها
 # =========================================================
-def copy_icons():
-    target_dir = RES_DIR / "mipmap-xxhdpi"
-    target_dir.mkdir(parents=True, exist_ok=True)
+def copy_assets():
+    target = RES_DIR / "mipmap-xxhdpi"
+    target.mkdir(parents=True, exist_ok=True)
 
-    icon_144 = ASSETS_DIR / "icon-144.png"
-    if not icon_144.exists():
+    icon = ASSETS_DIR / "icon-144.png"
+    if not icon.exists():
         fail("عکس پیدا نشد: assets/icon-144.png")
 
-    shutil.copy(icon_144, target_dir / "ic_launcher.png")
-    log("✅ icon-144.png → ic_launcher.png کپی شد")
+    shutil.copy(icon, target / "ic_launcher.png")
+    shutil.copy(icon, target / "ic_launcher_foreground.png")
+    log("✅ آیکون اپ کپی شد")
 
-    shutil.copy(icon_144, target_dir / "ic_launcher_foreground.png")
-    log("✅ icon-144.png → ic_launcher_foreground.png کپی شد")
-
-    splash_src = ASSETS_DIR / "splash-logo.png"
-    splash_dst = RES_DIR / "drawable" / "splash_logo.png"
-    splash_dst.parent.mkdir(parents=True, exist_ok=True)
-    if splash_src.exists():
-        shutil.copy(splash_src, splash_dst)
-        log("✅ splash-logo.png کپی شد")
+    logo = ASSETS_DIR / "splash-logo.png"
+    dst = RES_DIR / "drawable" / "splash_logo.png"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if logo.exists():
+        shutil.copy(logo, dst)
+        log("✅ لوگو اسپلش کپی شد")
     else:
         fail("عکس پیدا نشد: assets/splash-logo.png")
 
 
 # =========================================================
-# نوشتن build.gradle اپ
+# build.gradle
 # =========================================================
 def write_gradle(data):
-    b = data["branding"]
+    b = data.get("branding", {})
     adv = data.get("advanced", {})
-
-    content = f'''plugins {{
+    content = f"""plugins {{
     id 'com.android.application'
 }}
 
 android {{
-    namespace '{b["package_name"]}'
+    namespace '{b.get('package_name','app.vista')}'
     compileSdk 35
 
     defaultConfig {{
-        applicationId "{b["package_name"]}"
-        minSdk {adv.get("min_sdk", 24)}
-        targetSdk {adv.get("target_sdk", 34)}
-        versionCode {b["version_code"]}
-        versionName "{b["version_name"]}"
+        applicationId "{b.get('package_name','app.vista')}"
+        minSdk {adv.get('min_sdk', 24)}
+        targetSdk {adv.get('target_sdk', 34)}
+        versionCode {b.get('version_code', 1)}
+        versionName "{b.get('version_name', '1.0.0')}"
     }}
 
     signingConfigs {{
@@ -425,7 +599,7 @@ android {{
 
     applicationVariants.all {{ variant ->
         variant.outputs.all {{
-            outputFileName = "{b["package_name"]}-{b["version_name"]}-" + variant.buildType.name + ".apk"
+            outputFileName = "{b.get('package_name','app')}-{b.get('version_name','1.0.0')}-" + variant.buildType.name + ".apk"
         }}
     }}
 }}
@@ -437,8 +611,9 @@ dependencies {{
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.webkit:webkit:1.11.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
 }}
-'''
+"""
     GRADLE_APP.write_text(content, encoding="utf-8")
     log("✅ app/build.gradle نوشته شد")
 
@@ -448,7 +623,7 @@ dependencies {{
 # =========================================================
 def main():
     if not CONFIG_FILE.exists():
-        fail(f"فایل پیدا نشد: {CONFIG_FILE}")
+        fail(f"پیدا نشد: {CONFIG_FILE}")
 
     log(f"خوندن {CONFIG_FILE}")
     try:
@@ -457,19 +632,20 @@ def main():
         fail(f"app01.json معتبر نیست: {e}")
 
     require(data)
-    log("✅ همه‌ی فیلدهای اجباری موجودن")
+    log("✅ فیلدهای اجباری موجودن")
 
     pkg = data["branding"]["package_name"]
 
-    # ===== جابجایی فایل‌های جاوا =====
-    move_java_files(pkg)
-
-    write_colors(data)
+    write_config_java(data, pkg)
     write_strings(data)
-    copy_icons()
+    write_colors(data)
+    write_dimens(data)
+    write_styles(data)
+    move_java_files(pkg)
+    copy_assets()
     write_gradle(data)
 
-    log("🎉 همه‌چیز با موفقیت آماده شد")
+    log("🎉 همه‌چیز آماده شد")
 
 
 if __name__ == "__main__":
