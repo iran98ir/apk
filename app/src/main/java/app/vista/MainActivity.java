@@ -12,8 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -62,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean errorShown = false;
 
     private int colorBg;
-    private int colorProgress;
 
     private String baseUrl;
     private String baseDomain;
@@ -76,21 +73,18 @@ public class MainActivity extends AppCompatActivity {
         baseDomain = extractDomain(baseUrl);
         colorBg = cfg.getColorBackground();
 
-        // ساخت root با کد
         rootLayout = new FrameLayout(this);
         rootLayout.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         rootLayout.setBackgroundColor(colorBg);
 
-        // WebView
         webView = new WebView(this);
         webView.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         rootLayout.addView(webView);
 
-        // ProgressBar بالای صفحه
         progressBar = new ProgressBar(this, null,
                 android.R.attr.progressBarStyleHorizontal);
         FrameLayout.LayoutParams progParams = new FrameLayout.LayoutParams(
@@ -503,4 +497,4 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onDestroy();
     }
-                  }
+                                      }
