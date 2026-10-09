@@ -14,7 +14,6 @@ import os
 import re
 import shutil
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -25,7 +24,6 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "config" / "app01.json"
 ASSETS_DIR = ROOT / "assets"
 RES_DIR = ROOT / "app" / "src" / "main" / "res"
-JAVA_DIR = ROOT / "app" / "src" / "main" / "java" / "app" / "vista"
 GRADLE_APP = ROOT / "app" / "build.gradle"
 
 
@@ -298,25 +296,23 @@ def write_strings(data):
 # =========================================================
 def copy_icons():
     """عکس‌های assets رو به res منتقل می‌کنه."""
+    # ===== آیکون اپ =====
     target_dir = RES_DIR / "mipmap-xxhdpi"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    mappings = [
-        ("icon-48.png", "ic_launcher.png"),
-        ("icon-72.png", "ic_launcher.png"),
-        ("icon-96.png", "ic_launcher.png"),
-        ("icon-144.png", "ic_launcher.png"),
-    ]
+    icon_144 = ASSETS_DIR / "icon-144.png"
+    if not icon_144.exists():
+        fail("عکس پیدا نشد: assets/icon-144.png")
 
-    for src_name, dst_name in mappings:
-        src = ASSETS_DIR / src_name
-        if src.exists():
-            shutil.copy(src, target_dir / dst_name)
-            log(f"✅ {src_name} کپی شد")
-        else:
-            fail(f"عکس پیدا نشد: assets/{src_name}")
+    # کپی برای آیکون اصلی
+    shutil.copy(icon_144, target_dir / "ic_launcher.png")
+    log("✅ icon-144.png → ic_launcher.png کپی شد")
 
-    # لوگو splash
+    # کپی برای foreground (Adaptive Icon)
+    shutil.copy(icon_144, target_dir / "ic_launcher_foreground.png")
+    log("✅ icon-144.png → ic_launcher_foreground.png کپی شد")
+
+    # ===== لوگو splash =====
     splash_src = ASSETS_DIR / "splash-logo.png"
     splash_dst = RES_DIR / "drawable" / "splash_logo.png"
     splash_dst.parent.mkdir(parents=True, exist_ok=True)
@@ -350,14 +346,31 @@ android {{
         versionName "{b["version_name"]}"
     }}
 
+    signingConfigs {{
+        release {{
+            if (project.hasProperty('RELEASE_STORE_FILE')) {{
+                storeFile file(RELEASE_STORE_FILE)
+                storePassword RELEASE_STORE_PASSWORD
+                keyAlias RELEASE_KEY_ALIAS
+                keyPassword RELEASE_KEY_PASSWORD
+            }}
+        }}
+    }}
+
     buildTypes {{
         debug {{
             minifyEnabled false
+            if (project.hasProperty('RELEASE_STORE_FILE')) {{
+                signingConfig signingConfigs.release
+            }}
         }}
         release {{
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (project.hasProperty('RELEASE_STORE_FILE')) {{
+                signingConfig signingConfigs.release
+            }}
         }}
     }}
 
@@ -394,6 +407,7 @@ dependencies {{
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
 }}
 '''
     GRADLE_APP.write_text(content, encoding="utf-8")
