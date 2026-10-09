@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "ir.rosha.app"
+    namespace = project.findProperty("appPackageName") as String
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "ir.rosha.app"
+        applicationId = project.findProperty("appPackageName") as String
         minSdk = 24
         targetSdk = 34
         versionCode = 1
