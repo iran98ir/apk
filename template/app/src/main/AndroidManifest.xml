@@ -63,6 +63,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- ===== Welcome ===== -->
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <!-- ===== WebView ===== -->
         <activity
             android:name=".WebViewActivity"
