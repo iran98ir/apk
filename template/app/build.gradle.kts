@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = project.findProperty("appPackageName") as String
+    namespace = "ir.rosha.app"
     compileSdk = 34
 
     defaultConfig {
