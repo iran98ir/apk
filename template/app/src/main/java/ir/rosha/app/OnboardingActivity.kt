@@ -3,7 +3,7 @@
    مسیر: template/app/src/main/java/ir/rosha/app/OnboardingActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 هیچ پیش‌فرضی نداره
+   📌 بدون آیکون — فقط عنوان و متن
    ========================================================= */
 
 package ir.rosha.app
@@ -284,21 +284,6 @@ private fun SlidePage(slide: SlideData) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .clip(CircleShape)
-                .background(Color(0x1AE8A33D)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "✨",
-                fontSize = 64.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
         if (slide.title.isNotEmpty()) {
             Text(
                 text = slide.title,
