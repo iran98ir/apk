@@ -3,7 +3,7 @@
    مسیر: template/app/src/main/java/ir/rosha/app/ErrorActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 هیچ پیش‌فرضی نداره
+   📌 رنگ نوار بالا/پایین از colors.color_background
    ========================================================= */
 
 package ir.rosha.app
@@ -32,6 +32,11 @@ class ErrorActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ===== رنگ نوار بالا و پایین =====
+        val bgBarColor = AppConfig.color("colors", "color_background")
+        window.statusBarColor = bgBarColor
+        window.navigationBarColor = bgBarColor
 
         val errorType = intent.getStringExtra("error_type") ?: "unk"
 
