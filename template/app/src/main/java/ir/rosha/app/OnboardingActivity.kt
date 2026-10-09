@@ -4,6 +4,7 @@
    =========================================================
    📌 فقط از config.json می‌خونه
    📌 رنگ نوار بالا/پایین از colors.color_background
+   📌 بعد از آنبوردینگ: VPN یا Welcome یا WebView
    ========================================================= */
 
 package ir.rosha.app
@@ -54,6 +55,9 @@ class OnboardingActivity : ComponentActivity() {
         val dotActive      = AppConfig.color("onboarding", "dot_active")
         val dotInactive    = AppConfig.color("onboarding", "dot_inactive")
 
+        val vpnEnabled     = AppConfig.bool("vpn", "enabled")
+        val welcomeEnabled = AppConfig.bool("welcome", "enabled")
+
         // ===== اگه خاموش بود =====
         if (!enabled) {
             getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -61,8 +65,7 @@ class OnboardingActivity : ComponentActivity() {
                 .putBoolean("onboarding_done", true)
                 .apply()
 
-            startActivity(Intent(this, WebViewActivity::class.java))
-            finish()
+            goNext(vpnEnabled, welcomeEnabled)
             return
         }
 
@@ -94,12 +97,21 @@ class OnboardingActivity : ComponentActivity() {
                             .putBoolean("onboarding_done", true)
                             .apply()
 
-                        startActivity(Intent(this, VpnWarningActivity::class.java))
-                        finish()
+                        goNext(vpnEnabled, welcomeEnabled)
                     }
                 )
             }
         }
+    }
+
+    private fun goNext(vpnEnabled: Boolean, welcomeEnabled: Boolean) {
+        val next = when {
+            vpnEnabled     -> VpnWarningActivity::class.java
+            welcomeEnabled -> WelcomeActivity::class.java
+            else           -> WebViewActivity::class.java
+        }
+        startActivity(Intent(this, next))
+        finish()
     }
 
     private fun buildSlide(num: Int): SlideData {
