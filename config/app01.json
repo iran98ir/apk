@@ -5,7 +5,12 @@
         "package_name": "ir.rayan01",
         "version_code": 12,
         "version_name": "1.0.0",
-        "is_new_app": 1
+        "is_new_app": 1,
+        "icon_48": "",
+        "icon_72": "",
+        "icon_96": "",
+        "icon_144": "",
+        "splash_logo": ""
     },
     "colors": {
         "color_primary": "#fb7185",
@@ -20,6 +25,7 @@
         "bg_color_1": "#fff7f5",
         "bg_color_2": "#ffe4d5",
         "bg_gradient_angle": 180,
+        "bg_image": "",
         "bg_effect": "none",
         "bg_effect_opacity": 0.5
     },
@@ -48,6 +54,7 @@
         "bg_color_solid": "#fff7f5",
         "bg_color_1": "#fb7185",
         "bg_color_2": "#fcd34d",
+        "bg_image": "",
         "logo_size": 180,
         "logo_anim": "bounce",
         "title": "مومو",
@@ -77,6 +84,8 @@
         "s1_bg_solid": "#fff7f5",
         "s1_bg_1": "#fb7185",
         "s1_bg_2": "#fcd34d",
+        "s1_bg_image": "",
+        "s1_image": "",
         "s1_title": "به اپ ما خوش آمدی",
         "s1_title_color": "#831843",
         "s1_text": "همراه تو در هر مرحله",
@@ -86,6 +95,8 @@
         "s2_bg_solid": "#fff7f5",
         "s2_bg_1": "#fb7185",
         "s2_bg_2": "#fcd34d",
+        "s2_bg_image": "",
+        "s2_image": "",
         "s2_title": "سریع و امن",
         "s2_title_color": "#831843",
         "s2_text": "با چند کلیک هرچی میخوای",
@@ -95,6 +106,8 @@
         "s3_bg_solid": "#fff7f5",
         "s3_bg_1": "#fb7185",
         "s3_bg_2": "#fcd34d",
+        "s3_bg_image": "",
+        "s3_image": "",
         "s3_title": "آماده‌ای؟",
         "s3_title_color": "#831843",
         "s3_text": "بزن بریم که شروع کنیم",
@@ -104,6 +117,7 @@
         "enabled": 1,
         "title": "برای ورود به اپلیکیشن",
         "subtitle": "فیلتر شکن خود را خاموش کنید",
+        "icon": "",
         "button_text": "ورود",
         "button_bg": "#fb7185",
         "button_text_color": "#ffffff",
@@ -279,7 +293,7 @@
         "keystore_pass": "",
         "key_pass": "",
         "keystore_file": "",
-        "output_name": "mumu",
+        "output_name": "mu✂️mu",
         "output_format": "apk",
         "min_sdk": 24,
         "target_sdk": 34,
@@ -290,5 +304,9 @@
         "developer_name": "rayan,saz",
         "developer_email": "",
         "website": ""
+    },
+    "_meta": {
+        "saved_at": "2026-10-10 01:24:37",
+        "saved_by": "admin"
     }
-    }
+}
