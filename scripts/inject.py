@@ -7,6 +7,7 @@
 # 1. config/app01.json رو می‌خونه
 # 2. اگه فیلدی خالی/ناقص باشه → خطا می‌ده و build متوقف می‌شه
 # 3. اگه همه‌چی درست باشه → مقادیر رو توی فایل‌های XML/Java می‌ذاره
+# 4. فایل‌های جاوا رو از app/vista/ به مسیر جدید (بر اساس package_name) منتقل می‌کنه
 # =========================================================
 
 import json
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "config" / "app01.json"
 ASSETS_DIR = ROOT / "assets"
 RES_DIR = ROOT / "app" / "src" / "main" / "res"
+JAVA_SRC_DIR = ROOT / "app" / "src" / "main" / "java"
 GRADLE_APP = ROOT / "app" / "build.gradle"
 
 
@@ -59,7 +61,6 @@ def fail(msg):
 
 
 def get(data, path):
-    """مسیر نقطه‌ای رو از JSON می‌خونه."""
     keys = path.split(".")
     cur = data
     for k in keys:
@@ -70,7 +71,6 @@ def get(data, path):
 
 
 def require(data):
-    """چک می‌کنه همه‌ی فیلدهای اجباری موجود باشن."""
     missing = []
     for field in REQUIRED_FIELDS:
         val = get(data, field)
@@ -84,7 +84,6 @@ def require(data):
 
 
 def hex_to_android(hex_color):
-    """#fb7185 رو به #FFFB7185 تبدیل می‌کنه."""
     h = hex_color.strip().lstrip("#")
     if len(h) == 6:
         return f"#FF{h.upper()}"
@@ -94,29 +93,55 @@ def hex_to_android(hex_color):
 
 
 def esc(s):
-    """متن رو برای XML آماده می‌کنه:
-    - ایموجی‌ها و کاراکترهای ناسازگار رو حذف می‌کنه
-    - کاراکترهای خاص XML رو escape می‌کنه
-    """
     if s is None:
         return ""
     text = str(s)
-    # ===== حذف ایموجی‌ها و کاراکترهای غیرمجاز =====
-    # فقط فارسی، عربی، لاتین، اعداد و علائم نگارشی مجاز
-    allowed = (
-        r'\u0600-\u06FF'   # عربی/فارسی
-        r'\u0750-\u077F'   # عربی扩展
-        r'\uFB50-\uFDFF'   # عربی presentation A
-        r'\uFE70-\uFEFF'   # عربی presentation B
-        r'\u200C\u200D'    # ZWNJ/ZWJ
-        r'\u0020-\u007E'   # ASCII printable
-    )
-    text = re.sub(f'[^{allowed}]', '', text)
-    # ===== escape XML =====
     return (text
             .replace("&", "&amp;")
             .replace("<", "&lt;")
             .replace(">", "&gt;"))
+
+
+# =========================================================
+# جابجایی فایل‌های جاوا (بر اساس package_name)
+# =========================================================
+def move_java_files(package_name):
+    """فایل‌های جاوا رو از app/vista/ به مسیر جدید منتقل می‌کنه
+    و package رو توشون عوض می‌کنه."""
+    old_dir = JAVA_SRC_DIR / "app" / "vista"
+    new_dir = JAVA_SRC_DIR / package_name.replace(".", "/")
+
+    if not old_dir.exists():
+        log(f"⚠️ پوشه‌ی قدیمی پیدا نشد: {old_dir}")
+        return
+
+    new_dir.mkdir(parents=True, exist_ok=True)
+
+    # فایل‌های جاوا
+    java_files = list(old_dir.glob("*.java"))
+
+    for src_file in java_files:
+        dst_file = new_dir / src_file.name
+        content = src_file.read_text(encoding="utf-8")
+        # عوض کردن package
+        content = re.sub(
+            r'^package\s+app\.vista\s*;',
+            f'package {package_name};',
+            content,
+            flags=re.MULTILINE
+        )
+        # عوض کردن import ها
+        content = re.sub(
+            r'import\s+app\.vista\.',
+            f'import {package_name}.',
+            content
+        )
+        dst_file.write_text(content, encoding="utf-8")
+        log(f"✅ {src_file.name} → {new_dir.relative_to(JAVA_SRC_DIR)}/{src_file.name}")
+
+    # پاک کردن پوشه‌ی قدیمی
+    shutil.rmtree(old_dir)
+    log(f"✅ پوشه‌ی قدیمی حذف شد: app/vista")
 
 
 # =========================================================
@@ -304,7 +329,6 @@ def write_strings(data):
 # کپی عکس‌ها
 # =========================================================
 def copy_icons():
-    """عکس‌های assets رو به res منتقل می‌کنه."""
     target_dir = RES_DIR / "mipmap-xxhdpi"
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -434,6 +458,11 @@ def main():
 
     require(data)
     log("✅ همه‌ی فیلدهای اجباری موجودن")
+
+    pkg = data["branding"]["package_name"]
+
+    # ===== جابجایی فایل‌های جاوا =====
+    move_java_files(pkg)
 
     write_colors(data)
     write_strings(data)
