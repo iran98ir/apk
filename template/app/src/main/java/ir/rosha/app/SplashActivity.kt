@@ -1,6 +1,9 @@
 /* =========================================================
    SplashActivity.kt — صفحه اسپلش
    مسیر: template/app/src/main/java/ir/rosha/app/SplashActivity.kt
+   =========================================================
+   📌 فقط از config.json می‌خونه
+   📌 آیکون از template/icons/splash.png لود می‌شه
    ========================================================= */
 
 package ir.rosha.app
@@ -8,12 +11,12 @@ package ir.rosha.app
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -23,9 +26,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,40 +41,33 @@ import kotlinx.coroutines.delay
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : ComponentActivity() {
 
-    private val TAG = "SplashActivity"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(TAG, "🚀 SplashActivity شروع شد")
-
         // ===== از config.json =====
-        val enabled       = AppConfig.bool("splash", "enabled", true)
-        val duration      = AppConfig.int("splash", "duration", 2000)
-        val title         = AppConfig.str("splash", "title", "")
-        val subtitle      = AppConfig.str("splash", "subtitle", "")
-        val titleColor    = AppConfig.color("splash", "title_color", "#E8A33D")
-        val subtitleColor = AppConfig.color("splash", "subtitle_color", "#B8B0A0")
-        val titleSize     = AppConfig.int("splash", "title_size", 28)
-        val subtitleSize  = AppConfig.int("splash", "subtitle_size", 16)
-        val loaderColor   = AppConfig.color("splash", "loader_color", "#E8A33D")
-        val showLoader    = AppConfig.bool("splash", "show_loader", true)
-        val logoSize      = AppConfig.int("splash", "logo_size", 180)
-        val bgType        = AppConfig.str("splash", "bg_type", "solid")
-        val bgColor1      = AppConfig.color("splash", "bg_color_1", "#0D1B2E")
-        val bgColor2      = AppConfig.color("splash", "bg_color_2", "#1B2A4A")
-        val appName       = AppConfig.str("branding", "app_name", "App")
-
-        Log.d(TAG, "📖 تنظیمات اسپلش — enabled=$enabled, duration=$duration, title=$title")
+        val enabled       = AppConfig.bool("splash", "enabled")
+        val duration      = AppConfig.int("splash", "duration")
+        val title         = AppConfig.str("splash", "title")
+        val subtitle      = AppConfig.str("splash", "subtitle")
+        val titleColor    = AppConfig.color("splash", "title_color")
+        val subtitleColor = AppConfig.color("splash", "subtitle_color")
+        val titleSize     = AppConfig.int("splash", "title_size")
+        val subtitleSize  = AppConfig.int("splash", "subtitle_size")
+        val loaderColor   = AppConfig.color("splash", "loader_color")
+        val showLoader    = AppConfig.bool("splash", "show_loader")
+        val logoSize      = AppConfig.int("splash", "logo_size")
+        val bgType        = AppConfig.str("splash", "bg_type")
+        val bgColor1      = AppConfig.color("splash", "bg_color_1")
+        val bgColor2      = AppConfig.color("splash", "bg_color_2")
+        val appName       = AppConfig.str("branding", "app_name")
 
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val onboardingDone    = prefs.getBoolean("onboarding_done", false)
-        val onboardingEnabled = AppConfig.bool("onboarding", "enabled", false)
-        val vpnEnabled        = AppConfig.bool("vpn", "enabled", false)
+        val onboardingEnabled = AppConfig.bool("onboarding", "enabled")
+        val vpnEnabled        = AppConfig.bool("vpn", "enabled")
 
         // ===== اگه اسپلش خاموش بود =====
         if (!enabled) {
-            Log.d(TAG, "⚠️ اسپلش خاموشه — می‌ریم مرحله بعد")
             goNext(onboardingDone, onboardingEnabled, vpnEnabled)
             return
         }
@@ -105,9 +104,6 @@ class SplashActivity : ComponentActivity() {
             !onboardingDone && vpnEnabled        -> VpnWarningActivity::class.java
             else                                  -> WebViewActivity::class.java
         }
-
-        Log.d(TAG, "➡️ می‌ریم به: ${next.simpleName}")
-
         startActivity(Intent(this, next))
         finish()
     }
@@ -163,20 +159,37 @@ private fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // ===== لوگو (از splash_logo یا اولین حرف) =====
             Box(
                 modifier = Modifier
                     .size(logoSize.dp)
                     .scale(scale.value)
                     .alpha(alpha.value)
-                    .background(color = Color(titleColor), shape = CircleShape),
+                    .clip(CircleShape)
+                    .background(color = Color(titleColor).copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = appName.take(1),
-                    color = Color.White,
-                    fontSize = (logoSize / 2).sp,
-                    fontWeight = FontWeight.Black
-                )
+                val splashLogo = runCatching {
+                    painterResource(id = R.drawable.splash_logo)
+                }.getOrNull()
+
+                if (splashLogo != null) {
+                    Image(
+                        painter = splashLogo,
+                        contentDescription = "Splash Logo",
+                        modifier = Modifier
+                            .size(logoSize.dp)
+                            .padding(8.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text(
+                        text = appName.take(1),
+                        color = Color(titleColor),
+                        fontSize = (logoSize / 2).sp,
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
