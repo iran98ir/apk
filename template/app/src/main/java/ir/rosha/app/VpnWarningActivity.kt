@@ -4,6 +4,7 @@
    =========================================================
    📌 فقط از config.json می‌خونه
    📌 رنگ نوار بالا/پایین از colors.color_background
+   📌 بعد از VPN: Welcome یا WebView
    ========================================================= */
 
 package ir.rosha.app
@@ -40,11 +41,11 @@ class VpnWarningActivity : ComponentActivity() {
         window.navigationBarColor = bgBarColor
 
         // ===== از config.json =====
-        val enabled = AppConfig.bool("vpn", "enabled")
+        val enabled        = AppConfig.bool("vpn", "enabled")
+        val welcomeEnabled = AppConfig.bool("welcome", "enabled")
 
         if (!enabled) {
-            startActivity(Intent(this, WebViewActivity::class.java))
-            finish()
+            goNext(welcomeEnabled)
             return
         }
 
@@ -105,13 +106,20 @@ class VpnWarningActivity : ComponentActivity() {
                     recheckBorder = recheckBorder,
                     recheckColor  = recheckColor,
                     onRecheck     = { recreate() },
-                    onEnter       = {
-                        startActivity(Intent(this, WebViewActivity::class.java))
-                        finish()
-                    }
+                    onEnter       = { goNext(welcomeEnabled) }
                 )
             }
         }
+    }
+
+    private fun goNext(welcomeEnabled: Boolean) {
+        val next = if (welcomeEnabled) {
+            WelcomeActivity::class.java
+        } else {
+            WebViewActivity::class.java
+        }
+        startActivity(Intent(this, next))
+        finish()
     }
 }
 
