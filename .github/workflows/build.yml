@@ -39,14 +39,14 @@ jobs:
       - name: Run inject.py
         run: python scripts/inject.py
 
-      # ===== ۵. دانلود کامل Gradle Wrapper =====
+      # ===== ۵. ساخت Gradle Wrapper =====
       - name: Setup Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
           curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
-          curl -L -o gradle/wrapper/gradle-wrapper.properties https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.properties
           curl -L -o gradlew https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradlew
           curl -L -o gradlew.bat https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradlew.bat
+          printf 'distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip\nnetworkTimeout=10000\nvalidateDistributionUrl=true\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n' > gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
 
       # ===== ۶. کش Gradle =====
