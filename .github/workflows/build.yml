@@ -1,5 +1,6 @@
 # =========================================================
 # build.yml — GitHub Actions برای ساخت APK
+# مسیر: .github/workflows/build.yml
 # =========================================================
 
 name: Build APK
@@ -17,32 +18,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ===== ۱. چک‌اوت کد =====
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ===== ۲. نصب JDK 17 =====
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # ===== ۳. نصب Python =====
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # ===== ۴. اجرای inject.py =====
       - name: Run inject.py
         run: python scripts/inject.py
 
-      # ===== فقط JAR رو دانلود می‌کنه (بقیه رو تو داری) =====
-      - name: Download Gradle Wrapper JAR
+      # ===== ۵. دانلود کامل Gradle Wrapper =====
+      - name: Setup Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
-          fi
+          curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+          curl -L -o gradle/wrapper/gradle-wrapper.properties https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.properties
+          curl -L -o gradlew https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradlew
+          curl -L -o gradlew.bat https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradlew.bat
           chmod +x gradlew
 
+      # ===== ۶. کش Gradle =====
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -53,6 +60,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      # ===== ۷. ساخت Keystore =====
       - name: Generate Keystore
         run: |
           keytool -genkeypair -v \
@@ -63,6 +71,7 @@ jobs:
             -keypass AppPass@2026 \
             -dname "CN=App, OU=Dev, O=Rayan, L=Tehran, S=Tehran, C=IR"
 
+      # ===== ۸. تنظیم امضا =====
       - name: Setup signing config
         run: |
           echo "RELEASE_STORE_FILE=../release.keystore" >> gradle.properties
@@ -70,12 +79,15 @@ jobs:
           echo "RELEASE_KEY_ALIAS=appkey" >> gradle.properties
           echo "RELEASE_KEY_PASSWORD=AppPass@2026" >> gradle.properties
 
+      # ===== ۹. Build APK (Debug) =====
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
+      # ===== ۱۰. Build APK (Release) =====
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
+      # ===== ۱۱. آپلود APK Debug =====
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -83,6 +95,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
 
+      # ===== ۱۲. آپلود APK Release =====
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
