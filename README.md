@@ -2,40 +2,23 @@
 
 اپلیکیشن اندروید WebView با تنظیمات کاملاً پویا.
 
----
+## نحوه استفاده
 
-## 📱 چطور کار می‌کنه؟
+1. فایل `config/app01.json` رو عوض کن
+2. عکس‌ها رو توی `assets/` بذار (`icon-144.png` و `splash-logo.png`)
+3. `git push` کن
+4. GitHub Actions خودش APK می‌سازه
+5. از تب Actions دانلود کن
 
-1. تو فایل `config/app01.json` رو عوض می‌کنی
-2. `git push` می‌کنی
-3. GitHub Actions خودش APK می‌سازه
-4. از تب Actions دانلودش می‌کنی
+## فایل‌های مهم
 
----
+- `config/app01.json` → همه‌ی تنظیمات
+- `assets/icon-144.png` → آیکون اپ
+- `assets/splash-logo.png` → لوگوی اسپلش
+- `scripts/inject.py` → تبدیل JSON به Config.java
 
-## 🎯 فایل‌هایی که تو عوض می‌کنی:
+## ساختار
 
-| فایل | چیکار می‌کنه |
-|---|---|
-| `config/app01.json` | همه‌ی تنظیمات (اسم، رنگ، splash، URL و...) |
-| `assets/icon-144.png` | آیکون اپ |
-| `assets/splash-logo.png` | لوگوی صفحه‌ی splash |
-
-**همین. هیچ فایل دیگه‌ای رو دست نمی‌زنی.**
-
----
-
-## 🚫 هیچ هاردکدی وجود نداره
-
-- ❌ رنگ ثابت
-- ❌ متن ثابت
-- ❌ آدرس سایت ثابت
-- ❌ اسم اپ ثابت
-
-همه‌چی از `config/app01.json` خونده می‌شه.
-
-اگه `app01.json` ناقص باشه، **build شکست می‌خوره** و APK ساخته نمی‌شه.
-
----
-
-## 📂 ساختار پروژه
+- `app/src/main/java/app/vista/Config.java` → خودکار ساخته میشه از JSON
+- `app/src/main/java/app/vista/*.java` → کدهای UI
+- `app/build.gradle` → خودکار ساخته میشه از JSON
