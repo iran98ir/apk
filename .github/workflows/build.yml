@@ -195,6 +195,7 @@ jobs:
         run: |
           KEYSTORE_PATH="$PWD/app/keystore/temp.jks"
           ./gradlew clean --no-build-cache assembleRelease \
+            -PappPackageName="${{ steps.cfg.outputs.package }}" \
             -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="rosha${{ github.run_id }}" \
             -Pandroid.injected.signing.key.alias=tempkey \
