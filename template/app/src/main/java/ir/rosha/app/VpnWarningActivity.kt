@@ -3,7 +3,7 @@
    مسیر: template/app/src/main/java/ir/rosha/app/VpnWarningActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 هیچ پیش‌فرضی نداره
+   📌 رنگ نوار بالا/پایین از colors.color_background
    ========================================================= */
 
 package ir.rosha.app
@@ -34,6 +34,11 @@ class VpnWarningActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // ===== رنگ نوار بالا و پایین =====
+        val bgBarColor = AppConfig.color("colors", "color_background")
+        window.statusBarColor = bgBarColor
+        window.navigationBarColor = bgBarColor
+
         // ===== از config.json =====
         val enabled = AppConfig.bool("vpn", "enabled")
 
@@ -49,12 +54,10 @@ class VpnWarningActivity : ComponentActivity() {
         val topSubtitle     = AppConfig.str("vpn", "top_subtitle")
         val footnote        = AppConfig.str("vpn", "footnote")
         val showRecheck     = AppConfig.bool("vpn", "show_recheck")
-
-        // ===== از vpn.recheck =====
-        val recheckText     = AppConfig.str("vpn.recheck", "text")
-        val recheckBg       = AppConfig.str("vpn.recheck", "bg")
-        val recheckBorder   = AppConfig.color("vpn.recheck", "border")
-        val recheckColor    = AppConfig.color("vpn.recheck", "color")
+        val recheckText     = AppConfig.str("vpn", "recheck_text")
+        val recheckBg       = AppConfig.str("vpn", "recheck_bg")
+        val recheckBorder   = AppConfig.color("vpn", "recheck_border")
+        val recheckColor    = AppConfig.color("vpn", "recheck_color")
 
         // ===== state_on =====
         val onIcon  = AppConfig.str("vpn.state_on", "icon")
