@@ -3,7 +3,7 @@
    مسیر: template/app/src/main/java/ir/rosha/app/SplashActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 آیکون از template/icons/splash.png لود می‌شه
+   📌 بدون لوگو/آیکون — فقط متن و لودر
    ========================================================= */
 
 package ir.rosha.app
@@ -16,7 +16,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -26,12 +25,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,11 +51,9 @@ class SplashActivity : ComponentActivity() {
         val subtitleSize  = AppConfig.int("splash", "subtitle_size")
         val loaderColor   = AppConfig.color("splash", "loader_color")
         val showLoader    = AppConfig.bool("splash", "show_loader")
-        val logoSize      = AppConfig.int("splash", "logo_size")
         val bgType        = AppConfig.str("splash", "bg_type")
         val bgColor1      = AppConfig.color("splash", "bg_color_1")
         val bgColor2      = AppConfig.color("splash", "bg_color_2")
-        val appName       = AppConfig.str("branding", "app_name")
 
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val onboardingDone    = prefs.getBoolean("onboarding_done", false)
@@ -79,7 +73,6 @@ class SplashActivity : ComponentActivity() {
             ) {
                 SplashScreen(
                     duration      = duration.toLong(),
-                    appName       = appName,
                     title         = title,
                     subtitle      = subtitle,
                     titleColor    = titleColor,
@@ -88,7 +81,6 @@ class SplashActivity : ComponentActivity() {
                     subtitleSize  = subtitleSize,
                     loaderColor   = loaderColor,
                     showLoader    = showLoader,
-                    logoSize      = logoSize,
                     bgType        = bgType,
                     bgColor1      = bgColor1,
                     bgColor2      = bgColor2,
@@ -112,7 +104,6 @@ class SplashActivity : ComponentActivity() {
 @Composable
 private fun SplashScreen(
     duration: Long,
-    appName: String,
     title: String,
     subtitle: String,
     titleColor: Int,
@@ -121,21 +112,18 @@ private fun SplashScreen(
     subtitleSize: Int,
     loaderColor: Int,
     showLoader: Boolean,
-    logoSize: Int,
     bgType: String,
     bgColor1: Int,
     bgColor2: Int,
     onFinished: () -> Unit
 ) {
-    val scale = remember { Animatable(0.5f) }
     val alpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        scale.animateTo(
+        alpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(800, easing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f))
+            animationSpec = tween(600, easing = CubicBezierEasing(0.34f, 1.0f, 0.64f, 1.0f))
         )
-        alpha.animateTo(1f, animationSpec = tween(400))
     }
 
     LaunchedEffect(Unit) {
@@ -159,41 +147,6 @@ private fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // ===== لوگو (از splash_logo یا اولین حرف) =====
-            Box(
-                modifier = Modifier
-                    .size(logoSize.dp)
-                    .scale(scale.value)
-                    .alpha(alpha.value)
-                    .clip(CircleShape)
-                    .background(color = Color(titleColor).copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                val splashLogo = runCatching {
-                    painterResource(id = R.drawable.splash_logo)
-                }.getOrNull()
-
-                if (splashLogo != null) {
-                    Image(
-                        painter = splashLogo,
-                        contentDescription = "Splash Logo",
-                        modifier = Modifier
-                            .size(logoSize.dp)
-                            .padding(8.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
-                    Text(
-                        text = appName.take(1),
-                        color = Color(titleColor),
-                        fontSize = (logoSize / 2).sp,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             if (title.isNotEmpty()) {
                 Text(
                     text = title,
@@ -203,10 +156,10 @@ private fun SplashScreen(
                     modifier = Modifier.alpha(alpha.value),
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
             if (subtitle.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = subtitle,
                     color = Color(subtitleColor),
