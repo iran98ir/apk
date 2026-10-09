@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =========================================================
+     colors.xml — رنگ‌های اپ
+     مسیر: app/src/main/res/values/colors.xml
+     =========================================================
+     📌 این فایل توسط inject.py خودکار پر می‌شه
+     📌 مقادیر از config/app01.json میان
+     📌 این نسخه‌ی موقتیه — قبل از build بازنویسی می‌شه
+     ========================================================= -->
+<resources>
+
+    <!-- ===== رنگ‌های پایه ===== -->
+    <color name="color_primary">#FB7185</color>
+    <color name="color_background">#FFF7F5</color>
+    <color name="color_text">#831843</color>
+    <color name="color_text_secondary">#B45309</color>
+    <color name="color_button">#FB7185</color>
+    <color name="color_button_text">#FFFFFF</color>
+    <color name="color_accent">#FCD34D</color>
+
+    <!-- ===== مترادف‌ها ===== -->
+    <color name="bg_main">#FFF7F5</color>
+    <color name="bg_surface">#FFF7F5</color>
+    <color name="text_primary">#831843</color>
+    <color name="text_secondary">#B45309</color>
+    <color name="text_inverse">#FFFFFF</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- ===== Splash ===== -->
+    <color name="splash_bg_1">#FB7185</color>
+    <color name="splash_bg_2">#FCD34D</color>
+    <color name="splash_bg_solid">#FFF7F5</color>
+    <color name="splash_title_color">#FB7185</color>
+    <color name="splash_subtitle_color">#B45309</color>
+    <color name="splash_loader_color">#FCD34D</color>
+
+    <!-- ===== Welcome ===== -->
+    <color name="welcome_bg">#FFF7F5</color>
+    <color name="welcome_title_color">#831843</color>
+    <color name="welcome_subtitle_color">#B45309</color>
+    <color name="welcome_btn_bg">#FB7185</color>
+    <color name="welcome_btn_text">#FFFFFF</color>
+
+    <!-- ===== خطاها ===== -->
+    <color name="error_bg">#FFF7F5</color>
+    <color name="error_title_color">#FCD34D</color>
+    <color name="error_retry_bg">#FB7185</color>
+    <color name="error_retry_text">#FFFFFF</color>
+
+    <!-- ===== خروج ===== -->
+    <color name="exit_bg">#FFE4D5</color>
+    <color name="exit_title_color">#831843</color>
+    <color name="exit_text_color">#B45309</color>
+    <color name="exit_confirm_bg">#FCD34D</color>
+    <color name="exit_confirm_text">#FFFFFF</color>
+    <color name="exit_cancel_bg">#FB7185</color>
+    <color name="exit_cancel_text">#FFFFFF</color>
+
+    <!-- ===== Onboarding ===== -->
+    <color name="onb_btn_bg">#FB7185</color>
+    <color name="onb_btn_text">#FFFFFF</color>
+    <color name="onb_dot_active">#FCD34D</color>
+    <color name="onb_dot_inactive">#FED7AA</color>
+
+</resources>
