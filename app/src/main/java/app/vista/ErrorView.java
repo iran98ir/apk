@@ -1,6 +1,7 @@
 package app.vista;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
@@ -18,139 +19,114 @@ public class ErrorView extends FrameLayout {
 
     public ErrorView(Context context, String type, OnRetryListener listener) {
         super(context);
+
         setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        setBackgroundColor(getColor(R.color.color_background));
 
-        ErrorData data = getErrorData(type);
+        Data d = getData(type);
+        setBackgroundColor(Color.parseColor(d.bg));
 
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(dp(32), dp(32), dp(32), dp(32));
-        layout.setLayoutParams(new FrameLayout.LayoutParams(
+        LinearLayout root = new LinearLayout(context);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER);
+        root.setPadding(dp(32), dp(32), dp(32), dp(32));
+        root.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        addView(layout);
+        addView(root);
 
         TextView icon = new TextView(context);
-        icon.setText(data.icon);
+        icon.setText(d.icon);
         icon.setTextSize(64f);
         icon.setGravity(Gravity.CENTER);
-        layout.addView(icon);
+        root.addView(icon);
 
         TextView title = new TextView(context);
-        title.setText(data.title);
+        title.setText(d.title);
         title.setTextSize(20f);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setGravity(Gravity.CENTER);
-        title.setTextColor(getColor(R.color.color_text));
+        title.setTextColor(Color.parseColor(d.color));
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         tp.topMargin = dp(24);
         title.setLayoutParams(tp);
-        layout.addView(title);
+        root.addView(title);
 
         TextView text = new TextView(context);
-        text.setText(data.text);
+        text.setText(d.text);
         text.setTextSize(15f);
         text.setGravity(Gravity.CENTER);
-        text.setTextColor(getColor(R.color.color_text_secondary));
-        LinearLayout.LayoutParams txtP = new LinearLayout.LayoutParams(
+        text.setTextColor(Color.parseColor(d.color));
+        text.setAlpha(0.85f);
+        LinearLayout.LayoutParams xp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        txtP.topMargin = dp(12);
-        text.setLayoutParams(txtP);
-        layout.addView(text);
+        xp.topMargin = dp(12);
+        text.setLayoutParams(xp);
+        root.addView(text);
 
-        Button retry = new Button(context);
-        retry.setText(getString(R.string.error_retry));
-        retry.setTextSize(15f);
-        retry.setTypeface(Typeface.DEFAULT_BOLD);
-        retry.setTextColor(getColor(R.color.color_button_text));
-        retry.setBackground(roundedBg(getColor(R.color.color_button), dp(12)));
-        retry.setPadding(dp(48), dp(14), dp(48), dp(14));
-        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        bp.topMargin = dp(32);
-        retry.setLayoutParams(bp);
-        retry.setOnClickListener(v -> listener.onRetry());
-        layout.addView(retry);
+        if (Config.ERR_SHOW_RETRY) {
+            Button retry = new Button(context);
+            retry.setText(Config.ERR_RETRY_TEXT);
+            retry.setTextSize(15f);
+            retry.setTypeface(Typeface.DEFAULT_BOLD);
+            retry.setTextColor(Color.parseColor(Config.ERR_RETRY_COLOR));
+
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.RECTANGLE);
+            bg.setColor(Color.parseColor(Config.ERR_RETRY_BG));
+            bg.setCornerRadius(dp(12));
+            retry.setBackground(bg);
+
+            retry.setPadding(dp(48), dp(14), dp(48), dp(14));
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            rp.topMargin = dp(32);
+            retry.setLayoutParams(rp);
+            retry.setOnClickListener(v -> listener.onRetry());
+            root.addView(retry);
+        }
     }
 
-    private ErrorData getErrorData(String type) {
+    private Data getData(String type) {
         switch (type) {
             case "offline":
-                return new ErrorData("📡",
-                        getString(R.string.error_offline_title),
-                        getString(R.string.error_offline_text));
+                return new Data(Config.ERR_OFFLINE_ICON, Config.ERR_OFFLINE_TITLE, Config.ERR_OFFLINE_TEXT, Config.ERR_OFFLINE_COLOR, Config.ERR_OFFLINE_BG);
             case "server":
-                return new ErrorData("🛠",
-                        getString(R.string.error_server_title),
-                        getString(R.string.error_server_text));
+                return new Data(Config.ERR_SERVER_ICON, Config.ERR_SERVER_TITLE, Config.ERR_SERVER_TEXT, Config.ERR_SERVER_COLOR, Config.ERR_SERVER_BG);
             case "nf":
-                return new ErrorData("🔍",
-                        getString(R.string.error_nf_title),
-                        getString(R.string.error_nf_text));
+                return new Data(Config.ERR_NF_ICON, Config.ERR_NF_TITLE, Config.ERR_NF_TEXT, Config.ERR_NF_COLOR, Config.ERR_NF_BG);
             case "fb":
-                return new ErrorData("🚫",
-                        getString(R.string.error_fb_title),
-                        getString(R.string.error_fb_text));
+                return new Data(Config.ERR_FB_ICON, Config.ERR_FB_TITLE, Config.ERR_FB_TEXT, Config.ERR_FB_COLOR, Config.ERR_FB_BG);
             case "to":
-                return new ErrorData("⏱",
-                        getString(R.string.error_to_title),
-                        getString(R.string.error_to_text));
+                return new Data(Config.ERR_TO_ICON, Config.ERR_TO_TITLE, Config.ERR_TO_TEXT, Config.ERR_TO_COLOR, Config.ERR_TO_BG);
             case "dns":
-                return new ErrorData("🌍",
-                        getString(R.string.error_dns_title),
-                        getString(R.string.error_dns_text));
+                return new Data(Config.ERR_DNS_ICON, Config.ERR_DNS_TITLE, Config.ERR_DNS_TEXT, Config.ERR_DNS_COLOR, Config.ERR_DNS_BG);
             case "ssl":
-                return new ErrorData("🔒",
-                        getString(R.string.error_ssl_title),
-                        getString(R.string.error_ssl_text));
+                return new Data(Config.ERR_SSL_ICON, Config.ERR_SSL_TITLE, Config.ERR_SSL_TEXT, Config.ERR_SSL_COLOR, Config.ERR_SSL_BG);
             case "conn":
-                return new ErrorData("🔌",
-                        getString(R.string.error_conn_title),
-                        getString(R.string.error_conn_text));
+                return new Data(Config.ERR_CONN_ICON, Config.ERR_CONN_TITLE, Config.ERR_CONN_TEXT, Config.ERR_CONN_COLOR, Config.ERR_CONN_BG);
             default:
-                return new ErrorData("⚠️",
-                        getString(R.string.error_unk_title),
-                        getString(R.string.error_unk_text));
+                return new Data(Config.ERR_UNK_ICON, Config.ERR_UNK_TITLE, Config.ERR_UNK_TEXT, Config.ERR_UNK_COLOR, Config.ERR_UNK_BG);
         }
     }
 
-    private GradientDrawable roundedBg(int color, int radius) {
-        GradientDrawable d = new GradientDrawable();
-        d.setShape(GradientDrawable.RECTANGLE);
-        d.setColor(color);
-        d.setCornerRadius(radius);
-        return d;
+    private int dp(int v) {
+        return (int) (v * getResources().getDisplayMetrics().density);
     }
 
-    private int getColor(int res) {
-        return getContext().getResources().getColor(res, getContext().getTheme());
-    }
-
-    private String getString(int res) {
-        return getContext().getString(res);
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density);
-    }
-
-    private static class ErrorData {
-        String icon;
-        String title;
-        String text;
-
-        ErrorData(String icon, String title, String text) {
-            this.icon = icon;
-            this.title = title;
-            this.text = text;
+    private static class Data {
+        String icon, title, text, color, bg;
+        Data(String i, String t, String x, String c, String b) {
+            icon = i;
+            title = t;
+            text = x;
+            color = c;
+            bg = b;
         }
     }
-                  }
+}
