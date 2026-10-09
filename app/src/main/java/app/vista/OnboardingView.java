@@ -26,10 +26,10 @@ public class OnboardingView extends FrameLayout {
     }
 
     private final List<Page> pages = new ArrayList<>();
-    private final ViewPager2 pager;
-    private final LinearLayout dotsLayout;
-    private final Button nextButton;
-    private final TextView skipButton;
+    private ViewPager2 pager;
+    private LinearLayout dotsLayout;
+    private Button nextButton;
+    private TextView skipButton;
     private int current = 0;
 
     public OnboardingView(Context context, OnFinishListener listener) {
@@ -120,8 +120,8 @@ public class OnboardingView extends FrameLayout {
         dotsLayout.removeAllViews();
         for (int i = 0; i < pages.size(); i++) {
             View dot = new View(getContext());
-            int size = dp(i == current ? 18 : 8);
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(size, dp(8));
+            int width = dp(i == current ? 18 : 8);
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(width, dp(8));
             p.setMargins(dp(4), 0, dp(4), 0);
             dot.setLayoutParams(p);
             int color = i == current
@@ -251,4 +251,4 @@ public class OnboardingView extends FrameLayout {
             }
         }
     }
-                       }
+                                     }
