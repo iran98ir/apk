@@ -3,7 +3,7 @@
    مسیر: template/app/src/main/java/ir/rosha/app/SplashActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 بدون لوگو/آیکون — فقط متن و لودر
+   📌 رنگ نوار بالا/پایین از colors.color_background
    ========================================================= */
 
 package ir.rosha.app
@@ -39,6 +39,11 @@ class SplashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ===== رنگ نوار بالا و پایین =====
+        val bgBarColor = AppConfig.color("colors", "color_background")
+        window.statusBarColor = bgBarColor
+        window.navigationBarColor = bgBarColor
 
         // ===== از config.json =====
         val enabled       = AppConfig.bool("splash", "enabled")
