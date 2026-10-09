@@ -3,21 +3,19 @@
    مسیر: template/app/src/main/java/ir/rosha/app/AppConfig.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 اگه کلید نبود → به پشتیبان پیش‌فرض برمی‌گرده (بدون کرش)
+   📌 هیچ مقدار پیش‌فرضی نداره
+   📌 اگه کلید نبود → خطای واضح پرتاب می‌کنه
    ========================================================= */
 
 package ir.rosha.app
 
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 object AppConfig {
-
-    private const val TAG = "AppConfig"
 
     private var json: JsonObject? = null
 
@@ -29,14 +27,9 @@ object AppConfig {
             val text = context.assets.open("config.json")
                 .bufferedReader()
                 .use { it.readText() }
-
-            Log.d(TAG, "📖 config.json خوانده شد — حجم: ${text.length} کاراکتر")
-
-            val parsed = Gson().fromJson(text, JsonObject::class.java)
-            Log.d(TAG, "✅ config.json پارس شد")
-            parsed
+            Gson().fromJson(text, JsonObject::class.java)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ خطا در خواندن config.json: ${e.message}", e)
+            e.printStackTrace()
             JsonObject()
         }
     }
@@ -46,23 +39,8 @@ object AppConfig {
        ===================================================== */
     private fun section(name: String): JsonObject? {
         return try {
-            // ===== پشتیبانی از name.subname =====
-            if (name.contains(".")) {
-                val parts = name.split(".")
-                var current: JsonObject = json ?: return null
-
-                for (part in parts) {
-                    if (!current.has(part) || !current.get(part).isJsonObject) {
-                        return null
-                    }
-                    current = current.getAsJsonObject(part)
-                }
-                return current
-            }
-
             json?.getAsJsonObject(name)
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن بخش $name: ${e.message}")
             null
         }
     }
@@ -80,77 +58,50 @@ object AppConfig {
     }
 
     /* =====================================================
-       گرفتن مقادیر — با fallback امن
+       گرفتن مقادیر — بدون پیش‌فرض
        ===================================================== */
-    fun str(sectionName: String, key: String, default: String = ""): String {
+    fun str(sectionName: String, key: String): String {
+        requireKey(sectionName, key)
         return try {
-            val s = section(sectionName) ?: return default
-            if (!s.has(key) || s.get(key).isJsonNull) return default
-            s.get(key).asString
+            section(sectionName)!!.get(key).asString
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن $sectionName.$key → استفاده از '$default'")
-            default
+            throw IllegalStateException("خطا در خواندن $sectionName.$key از config.json")
         }
     }
 
-    fun int(sectionName: String, key: String, default: Int = 0): Int {
+    fun int(sectionName: String, key: String): Int {
+        requireKey(sectionName, key)
         return try {
-            val s = section(sectionName) ?: return default
-            if (!s.has(key) || s.get(key).isJsonNull) return default
-            s.get(key).asInt
+            section(sectionName)!!.get(key).asInt
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن $sectionName.$key → استفاده از $default")
-            default
+            throw IllegalStateException("خطا در خواندن $sectionName.$key از config.json")
         }
     }
 
-    fun float(sectionName: String, key: String, default: Float = 0f): Float {
+    fun float(sectionName: String, key: String): Float {
+        requireKey(sectionName, key)
         return try {
-            val s = section(sectionName) ?: return default
-            if (!s.has(key) || s.get(key).isJsonNull) return default
-            s.get(key).asFloat
+            section(sectionName)!!.get(key).asFloat
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن $sectionName.$key → استفاده از $default")
-            default
+            throw IllegalStateException("خطا در خواندن $sectionName.$key از config.json")
         }
     }
 
-    fun bool(sectionName: String, key: String, default: Boolean = false): Boolean {
+    fun bool(sectionName: String, key: String): Boolean {
+        requireKey(sectionName, key)
         return try {
-            val s = section(sectionName) ?: return default
-            if (!s.has(key) || s.get(key).isJsonNull) return default
-
-            val elem = s.get(key)
-            when {
-                elem.isJsonPrimitive && elem.asJsonPrimitive.isBoolean -> elem.asBoolean
-                elem.isJsonPrimitive && elem.asJsonPrimitive.isNumber  -> elem.asInt != 0
-                elem.isJsonPrimitive && elem.asJsonPrimitive.isString  -> {
-                    val v = elem.asString.lowercase()
-                    v == "true" || v == "1" || v == "yes" || v == "on"
-                }
-                else -> default
-            }
+            section(sectionName)!!.get(key).asBoolean
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن $sectionName.$key → استفاده از $default")
-            default
+            throw IllegalStateException("خطا در خواندن $sectionName.$key از config.json")
         }
     }
 
-    fun color(sectionName: String, key: String, default: String = "#000000"): Int {
+    fun color(sectionName: String, key: String): Int {
+        requireKey(sectionName, key)
         return try {
-            val s = section(sectionName) ?: return Color.parseColor(default)
-            if (!s.has(key) || s.get(key).isJsonNull) return Color.parseColor(default)
-
-            val colorStr = s.get(key).asString
-            if (colorStr.isBlank()) return Color.parseColor(default)
-            Color.parseColor(colorStr)
+            Color.parseColor(section(sectionName)!!.get(key).asString)
         } catch (e: Exception) {
-            Log.w(TAG, "خطا در خواندن رنگ $sectionName.$key → استفاده از $default")
-            try {
-                Color.parseColor(default)
-            } catch (e2: Exception) {
-                Color.BLACK
-            }
+            throw IllegalStateException("خطا در خواندن رنگ $sectionName.$key از config.json")
         }
     }
 
@@ -173,48 +124,129 @@ object AppConfig {
     }
 
     /* =====================================================
-       اعتبارسنجی — فقط لاگ می‌کنه، کرش نمی‌کنه
+       پرتاب خطا اگه کلید نبود
+       ===================================================== */
+    private fun requireKey(sectionName: String, key: String) {
+        if (section(sectionName) == null) {
+            throw IllegalStateException("بخش $sectionName توی config.json نیست")
+        }
+        if (!has(sectionName, key)) {
+            throw IllegalStateException("کلید $sectionName.$key توی config.json نیست")
+        }
+    }
+
+    /* =====================================================
+       اعتبارسنجی کل config
        ===================================================== */
     fun validateAll(): List<String> {
         val required = mapOf(
             "branding" to listOf(
-                "app_name", "app_name_en", "package_name",
-                "version_code", "version_name"
+                "app_name",
+                "app_name_en",
+                "package_name",
+                "version_code",
+                "version_name"
             ),
             "splash" to listOf(
-                "enabled", "duration", "title", "subtitle",
-                "title_color", "subtitle_color", "title_size", "subtitle_size",
-                "loader_color", "show_loader", "logo_size",
-                "bg_type", "bg_color_1", "bg_color_2"
+                "enabled",
+                "duration",
+                "title",
+                "subtitle",
+                "title_color",
+                "subtitle_color",
+                "title_size",
+                "subtitle_size",
+                "loader_color",
+                "show_loader",
+                "bg_type",
+                "bg_color_1",
+                "bg_color_2"
             ),
             "onboarding" to listOf(
-                "enabled", "skip_text", "next_text", "prev_text", "start_text",
-                "btn_bg", "btn_text_color", "dot_active", "dot_inactive"
+                "enabled",
+                "skip_text",
+                "next_text",
+                "prev_text",
+                "start_text",
+                "btn_bg",
+                "btn_text_color",
+                "dot_active",
+                "dot_inactive"
             ),
             "vpn" to listOf(
-                "enabled", "top_title", "top_subtitle", "footnote", "show_recheck"
+                "enabled",
+                "top_title",
+                "top_subtitle",
+                "footnote",
+                "show_recheck"
+            ),
+            "welcome" to listOf(
+                "enabled",
+                "title",
+                "subtitle",
+                "icon",
+                "button_text",
+                "button_bg",
+                "button_text_color",
+                "bg_color",
+                "title_color",
+                "subtitle_color"
             ),
             "webview" to listOf(
-                "url", "url_home", "js_enabled", "zoom_enabled",
-                "dom_storage", "database", "cache_enabled",
-                "user_agent", "user_agent_custom",
-                "progress_bar", "progress_color",
-                "back_button", "back_double", "back_exit_msg",
-                "external_links", "mail_links", "tel_links",
-                "whatsapp_links", "telegram_links", "instagram_links"
+                "url",
+                "url_home",
+                "js_enabled",
+                "zoom_enabled",
+                "dom_storage",
+                "database",
+                "cache_enabled",
+                "user_agent",
+                "user_agent_custom",
+                "progress_bar",
+                "progress_color",
+                "back_button",
+                "back_double",
+                "back_exit_msg",
+                "external_links",
+                "mail_links",
+                "tel_links",
+                "whatsapp_links",
+                "telegram_links",
+                "instagram_links"
             ),
             "errors" to listOf(
-                "enabled", "show_retry", "show_home",
-                "retry_text", "retry_bg", "retry_color",
-                "home_text", "home_color", "home_border"
+                "enabled",
+                "show_retry",
+                "show_home",
+                "retry_text",
+                "retry_bg",
+                "retry_color",
+                "home_text",
+                "home_color",
+                "home_border"
             ),
             "exit" to listOf(
-                "enabled", "double_back", "double_back_msg", "show_icon",
-                "dialog_type", "radius", "border_width",
-                "icon", "title", "title_color", "text", "text_color",
-                "bg_color", "border_color", "overlay_color",
-                "btn_confirm_text", "btn_confirm_bg", "btn_confirm_color",
-                "btn_cancel_text", "btn_cancel_bg", "btn_cancel_color",
+                "enabled",
+                "double_back",
+                "double_back_msg",
+                "show_icon",
+                "dialog_type",
+                "radius",
+                "border_width",
+                "icon",
+                "title",
+                "title_color",
+                "text",
+                "text_color",
+                "bg_color",
+                "border_color",
+                "overlay_color",
+                "btn_confirm_text",
+                "btn_confirm_bg",
+                "btn_confirm_color",
+                "btn_cancel_text",
+                "btn_cancel_bg",
+                "btn_cancel_color",
                 "btn_layout"
             )
         )
@@ -231,23 +263,16 @@ object AppConfig {
         // ===== چک VPN state‌ها =====
         listOf("state_on", "state_off", "state_unknown").forEach { state ->
             listOf("icon", "title", "text", "color", "bg", "btn").forEach { key ->
-                if (!has("vpn.$state", key)) {
-                    missing.add("vpn.$state.$key")
+                val s = section("vpn")
+                if (s != null && s.has(state) && s.get(state).isJsonObject) {
+                    val sub = s.getAsJsonObject(state)
+                    if (!sub.has(key) || sub.get(key).isJsonNull) {
+                        missing.add("vpn.$state.$key")
+                    }
+                } else {
+                    missing.add("vpn.$state")
                 }
             }
-        }
-
-        // ===== چک vpn.recheck =====
-        listOf("text", "bg", "border", "color").forEach { key ->
-            if (!has("vpn.recheck", key)) {
-                missing.add("vpn.recheck.$key")
-            }
-        }
-
-        if (missing.isNotEmpty()) {
-            Log.w(TAG, "⚠️ کلیدهای غایب در config.json:\n" + missing.joinToString("\n"))
-        } else {
-            Log.d(TAG, "✅ همه‌ی کلیدها موجودند")
         }
 
         return missing
