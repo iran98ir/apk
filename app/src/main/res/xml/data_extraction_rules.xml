@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- =========================================================
-     data_extraction_rules.xml — قوانین Backup
-     مسیر: app/src/main/res/xml/data_extraction_rules.xml
-     ========================================================= -->
 <data-extraction-rules>
-
     <cloud-backup>
         <exclude domain="root" />
         <exclude domain="database" />
@@ -12,7 +7,6 @@
         <exclude domain="external" />
         <exclude domain="file" />
     </cloud-backup>
-
     <device-transfer>
         <exclude domain="root" />
         <exclude domain="database" />
@@ -20,5 +14,4 @@
         <exclude domain="external" />
         <exclude domain="file" />
     </device-transfer>
-
 </data-extraction-rules>
