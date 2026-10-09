@@ -117,7 +117,7 @@
         "enabled": 1,
         "title": "برای ورود به اپلیکیشن",
         "subtitle": "فیلتر شکن خود را خاموش کنید",
-        "icon": "",
+        "icon": "✂️",
         "button_text": "ورود",
         "button_bg": "#fb7185",
         "button_text_color": "#ffffff",
@@ -306,7 +306,7 @@
         "website": "www.google.com"
     },
     "_meta": {
-        "saved_at": "2026-10-10 03:20:59",
+        "saved_at": "2026-10-10 03:22:38",
         "saved_by": "admin"
     }
 }
