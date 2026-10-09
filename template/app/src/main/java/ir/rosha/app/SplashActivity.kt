@@ -4,6 +4,7 @@
    =========================================================
    📌 فقط از config.json می‌خونه
    📌 رنگ نوار بالا/پایین از colors.color_background
+   📌 بعد از اسپلش: Onboarding یا VPN یا Welcome یا WebView
    ========================================================= */
 
 package ir.rosha.app
@@ -64,10 +65,11 @@ class SplashActivity : ComponentActivity() {
         val onboardingDone    = prefs.getBoolean("onboarding_done", false)
         val onboardingEnabled = AppConfig.bool("onboarding", "enabled")
         val vpnEnabled        = AppConfig.bool("vpn", "enabled")
+        val welcomeEnabled    = AppConfig.bool("welcome", "enabled")
 
         // ===== اگه اسپلش خاموش بود =====
         if (!enabled) {
-            goNext(onboardingDone, onboardingEnabled, vpnEnabled)
+            goNext(onboardingDone, onboardingEnabled, vpnEnabled, welcomeEnabled)
             return
         }
 
@@ -89,17 +91,23 @@ class SplashActivity : ComponentActivity() {
                     bgType        = bgType,
                     bgColor1      = bgColor1,
                     bgColor2      = bgColor2,
-                    onFinished    = { goNext(onboardingDone, onboardingEnabled, vpnEnabled) }
+                    onFinished    = { goNext(onboardingDone, onboardingEnabled, vpnEnabled, welcomeEnabled) }
                 )
             }
         }
     }
 
-    private fun goNext(onboardingDone: Boolean, onboardingEnabled: Boolean, vpnEnabled: Boolean) {
+    private fun goNext(
+        onboardingDone: Boolean,
+        onboardingEnabled: Boolean,
+        vpnEnabled: Boolean,
+        welcomeEnabled: Boolean
+    ) {
         val next = when {
             !onboardingDone && onboardingEnabled -> OnboardingActivity::class.java
             !onboardingDone && vpnEnabled        -> VpnWarningActivity::class.java
-            else                                  -> WebViewActivity::class.java
+            welcomeEnabled                       -> WelcomeActivity::class.java
+            else                                 -> WebViewActivity::class.java
         }
         startActivity(Intent(this, next))
         finish()
