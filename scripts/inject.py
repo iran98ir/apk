@@ -10,7 +10,6 @@
 # =========================================================
 
 import json
-import os
 import re
 import shutil
 import sys
@@ -28,7 +27,7 @@ GRADLE_APP = ROOT / "app" / "build.gradle"
 
 
 # =========================================================
-# رنگ‌های اجباری
+# فیلدهای اجباری
 # =========================================================
 REQUIRED_FIELDS = [
     "branding.app_name",
@@ -60,7 +59,7 @@ def fail(msg):
 
 
 def get(data, path):
-    """مسیر نقطه‌ای رو از JSON می‌خونه: get(data, 'branding.app_name')"""
+    """مسیر نقطه‌ای رو از JSON می‌خونه."""
     keys = path.split(".")
     cur = data
     for k in keys:
@@ -85,13 +84,39 @@ def require(data):
 
 
 def hex_to_android(hex_color):
-    """#fb7185 رو به #FFFB7185 تبدیل می‌کنه (با آلفا)."""
+    """#fb7185 رو به #FFFB7185 تبدیل می‌کنه."""
     h = hex_color.strip().lstrip("#")
     if len(h) == 6:
         return f"#FF{h.upper()}"
     if len(h) == 8:
         return f"#{h.upper()}"
     fail(f"رنگ نامعتبر: {hex_color}")
+
+
+def esc(s):
+    """متن رو برای XML آماده می‌کنه:
+    - ایموجی‌ها و کاراکترهای ناسازگار رو حذف می‌کنه
+    - کاراکترهای خاص XML رو escape می‌کنه
+    """
+    if s is None:
+        return ""
+    text = str(s)
+    # ===== حذف ایموجی‌ها و کاراکترهای غیرمجاز =====
+    # فقط فارسی، عربی، لاتین، اعداد و علائم نگارشی مجاز
+    allowed = (
+        r'\u0600-\u06FF'   # عربی/فارسی
+        r'\u0750-\u077F'   # عربی扩展
+        r'\uFB50-\uFDFF'   # عربی presentation A
+        r'\uFE70-\uFEFF'   # عربی presentation B
+        r'\u200C\u200D'    # ZWNJ/ZWJ
+        r'\u0020-\u007E'   # ASCII printable
+    )
+    text = re.sub(f'[^{allowed}]', '', text)
+    # ===== escape XML =====
+    return (text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;"))
 
 
 # =========================================================
@@ -124,7 +149,6 @@ def write_colors(data):
         "transparent": "#00000000",
     }
 
-    # رنگ‌های splash
     if splash.get("bg_color_1"):
         colors["splash_bg_1"] = hex_to_android(splash["bg_color_1"])
     if splash.get("bg_color_2"):
@@ -138,7 +162,6 @@ def write_colors(data):
     if splash.get("loader_color"):
         colors["splash_loader_color"] = hex_to_android(splash["loader_color"])
 
-    # رنگ‌های welcome
     if welcome.get("bg_color"):
         colors["welcome_bg"] = hex_to_android(welcome["bg_color"])
     if welcome.get("title_color"):
@@ -150,7 +173,6 @@ def write_colors(data):
     if welcome.get("button_text_color"):
         colors["welcome_btn_text"] = hex_to_android(welcome["button_text_color"])
 
-    # رنگ‌های خطا
     if errors.get("retry_bg"):
         colors["error_retry_bg"] = hex_to_android(errors["retry_bg"])
     if errors.get("retry_color"):
@@ -160,7 +182,6 @@ def write_colors(data):
     if errors.get("offline_color"):
         colors["error_title_color"] = hex_to_android(errors["offline_color"])
 
-    # رنگ‌های exit
     if exit_cfg.get("bg_color"):
         colors["exit_bg"] = hex_to_android(exit_cfg["bg_color"])
     if exit_cfg.get("title_color"):
@@ -176,7 +197,6 @@ def write_colors(data):
     if exit_cfg.get("btn_cancel_color"):
         colors["exit_cancel_text"] = hex_to_android(exit_cfg["btn_cancel_color"])
 
-    # رنگ‌های onboarding
     if onboarding.get("btn_bg"):
         colors["onb_btn_bg"] = hex_to_android(onboarding["btn_bg"])
     if onboarding.get("btn_text_color"):
@@ -186,7 +206,6 @@ def write_colors(data):
     if onboarding.get("dot_inactive"):
         colors["onb_dot_inactive"] = hex_to_android(onboarding["dot_inactive"])
 
-    # نوشتن
     lines = ['<?xml version="1.0" encoding="utf-8"?>', "<resources>", ""]
     for name, val in colors.items():
         lines.append(f'    <color name="{name}">{val}</color>')
@@ -211,16 +230,6 @@ def write_strings(data):
     webview = data.get("webview", {})
     onboarding = data.get("onboarding", {})
     vpn = data.get("vpn", {})
-
-    def esc(s):
-        if s is None:
-            return ""
-        return (str(s)
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("'", "\\'")
-                .replace('"', '\\"'))
 
     strings = {
         "app_name": esc(b["app_name"]),
@@ -296,7 +305,6 @@ def write_strings(data):
 # =========================================================
 def copy_icons():
     """عکس‌های assets رو به res منتقل می‌کنه."""
-    # ===== آیکون اپ =====
     target_dir = RES_DIR / "mipmap-xxhdpi"
     target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -304,15 +312,12 @@ def copy_icons():
     if not icon_144.exists():
         fail("عکس پیدا نشد: assets/icon-144.png")
 
-    # کپی برای آیکون اصلی
     shutil.copy(icon_144, target_dir / "ic_launcher.png")
     log("✅ icon-144.png → ic_launcher.png کپی شد")
 
-    # کپی برای foreground (Adaptive Icon)
     shutil.copy(icon_144, target_dir / "ic_launcher_foreground.png")
     log("✅ icon-144.png → ic_launcher_foreground.png کپی شد")
 
-    # ===== لوگو splash =====
     splash_src = ASSETS_DIR / "splash-logo.png"
     splash_dst = RES_DIR / "drawable" / "splash_logo.png"
     splash_dst.parent.mkdir(parents=True, exist_ok=True)
