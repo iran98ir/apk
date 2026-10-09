@@ -3,7 +3,8 @@
    مسیر: template/app/src/main/java/ir/rosha/app/WebViewActivity.kt
    =========================================================
    📌 فقط از config.json می‌خونه
-   📌 هیچ پیش‌فرضی نداره
+   📌 هیچ خطای خام مرورگری نشون داده نمیشه
+   📌 همه‌ی خطاها (شبکه، HTTP، SSL، کرش) مدیریت شده
    ========================================================= */
 
 package ir.rosha.app
@@ -12,6 +13,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.net.http.SslError
 import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.*
@@ -33,6 +35,7 @@ class WebViewActivity : ComponentActivity() {
     private var currentUrl: String = ""
     private var homeUrl: String = ""
     private var lastBackTime = 0L
+    private var errorShown = false
 
     // ===== از config =====
     private val startUrl: String by lazy { AppConfig.str("webview", "url") }
@@ -41,8 +44,6 @@ class WebViewActivity : ComponentActivity() {
     private val zoomEnabled: Boolean by lazy { AppConfig.bool("webview", "zoom_enabled") }
     private val domStorage: Boolean by lazy { AppConfig.bool("webview", "dom_storage") }
     private val database: Boolean by lazy { AppConfig.bool("webview", "database") }
-    private val progressBar: Boolean by lazy { AppConfig.bool("webview", "progress_bar") }
-    private val progressColor: Int by lazy { AppConfig.color("webview", "progress_color") }
     private val backButton: Boolean by lazy { AppConfig.bool("webview", "back_button") }
     private val backDouble: Boolean by lazy { AppConfig.bool("webview", "back_double") }
     private val backExitMsg: String by lazy { AppConfig.str("webview", "back_exit_msg") }
@@ -79,7 +80,7 @@ class WebViewActivity : ComponentActivity() {
             onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     val wv = webView
-                    if (wv != null && wv.canGoBack()) {
+                    if (wv != null && wv.canGoBack() && !errorShown) {
                         wv.goBack()
                     } else {
                         handleExitBack()
@@ -146,6 +147,7 @@ class WebViewActivity : ComponentActivity() {
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         settings.mediaPlaybackRequiresUserGesture = false
 
+        // ===== WebViewClient =====
         wv.webViewClient = object : WebViewClient() {
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -186,29 +188,115 @@ class WebViewActivity : ComponentActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 currentUrl = url ?: ""
+                errorShown = false
             }
 
-            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
                 super.onReceivedError(view, request, error)
+
+                if (request?.isForMainFrame != true) return
+                if (errorShown) return
+                errorShown = true
+
                 if (!errorEnabled) return
-                if (request?.isForMainFrame == true) {
-                    val errorType = when (error?.errorCode) {
-                        WebViewClient.ERROR_HOST_LOOKUP -> "dns"
-                        WebViewClient.ERROR_CONNECT -> "conn"
-                        WebViewClient.ERROR_TIMEOUT -> "to"
-                        WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> "ssl"
-                        else -> "unk"
-                    }
-                    val intent = Intent(this@WebViewActivity, ErrorActivity::class.java)
-                    intent.putExtra("error_type", errorType)
-                    startActivity(intent)
+
+                view?.stopLoading()
+
+                val errorType = when (error?.errorCode) {
+                    WebViewClient.ERROR_HOST_LOOKUP -> "dns"
+                    WebViewClient.ERROR_CONNECT -> "conn"
+                    WebViewClient.ERROR_TIMEOUT -> "to"
+                    WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> "ssl"
+                    WebViewClient.ERROR_BAD_URL -> "unk"
+                    else -> "unk"
                 }
+
+                showError(errorType)
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                errorResponse: WebResourceResponse?
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse)
+
+                if (request?.isForMainFrame != true) return
+                if (errorShown) return
+                errorShown = true
+
+                if (!errorEnabled) return
+
+                view?.stopLoading()
+
+                val statusCode = errorResponse?.statusCode ?: 0
+                val errorType = when (statusCode) {
+                    404 -> "nf"
+                    403 -> "fb"
+                    500, 502, 503, 504 -> "server"
+                    408 -> "to"
+                    else -> "unk"
+                }
+
+                showError(errorType)
+            }
+
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                super.onReceivedSslError(view, handler, error)
+
+                if (errorShown) {
+                    handler?.cancel()
+                    return
+                }
+                errorShown = true
+
+                // ===== لغو اتصال ناامن =====
+                handler?.cancel()
+
+                if (!errorEnabled) return
+
+                view?.stopLoading()
+                showError("ssl")
+            }
+
+            override fun onRenderProcessGone(
+                view: WebView?,
+                detail: RenderProcessGoneDetail?
+            ): Boolean {
+                // ===== WebView کرش کرده =====
+                if (!errorEnabled) return false
+
+                webView?.destroy()
+                webView = null
+
+                showError("unk")
+                return true
             }
         }
 
+        // ===== WebChromeClient =====
         wv.webChromeClient = object : WebChromeClient() {}
 
+        // ===== لود =====
         wv.loadUrl(startUrl)
+    }
+
+    /* =====================================================
+       نمایش صفحه‌ی خطای زیبا
+       ===================================================== */
+    private fun showError(errorType: String) {
+        val intent = Intent(this, ErrorActivity::class.java)
+        intent.putExtra("error_type", errorType)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+        startActivity(intent)
     }
 }
 
