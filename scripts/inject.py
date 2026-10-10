@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =========================================================
-# inject.py — JSON به Config.java + resources
+# inject.py — JSON به Config.java + resources + Manifest
 # مسیر: scripts/inject.py
 # =========================================================
 
@@ -129,6 +129,7 @@ ALWAYS_REQUIRED = [
     "advanced.min_sdk",
     "advanced.target_sdk",
     "advanced.architecture",
+    "advanced.orientation",
     "advanced.developer_name",
     "advanced.developer_email",
     "advanced.website",
@@ -335,7 +336,6 @@ def write_config_java(data, pkg):
     L.append("public final class Config {")
     L.append("    private Config() {}")
 
-    # BRANDING
     L.append("")
     L.append("    // ===== BRANDING =====")
     L.append(f"    public static final String APP_NAME = {J(g('branding.app_name'))};")
@@ -345,7 +345,6 @@ def write_config_java(data, pkg):
     L.append(f"    public static final String VERSION_NAME = {J(g('branding.version_name'))};")
     L.append(f"    public static final boolean IS_NEW_APP = {B(g('branding.is_new_app'))};")
 
-    # COLORS
     L.append("")
     L.append("    // ===== COLORS =====")
     L.append(f"    public static final String COLOR_PRIMARY = {J(C(g('colors.color_primary')))};")
@@ -363,7 +362,6 @@ def write_config_java(data, pkg):
     L.append(f"    public static final String BG_EFFECT = {J(g('colors.bg_effect'))};")
     L.append(f"    public static final float BG_EFFECT_OPACITY = {F(g('colors.bg_effect_opacity'))}f;")
 
-    # FONTS
     L.append("")
     L.append("    // ===== FONTS =====")
     L.append(f"    public static final String FONT_FAMILY = {J(g('fonts.font_family'))};")
@@ -383,7 +381,6 @@ def write_config_java(data, pkg):
     L.append(f"    public static final int ANIM_DURATION = {I(g('fonts.anim_duration'))};")
     L.append(f"    public static final int ANIM_DELAY = {I(g('fonts.anim_delay'))};")
 
-    # SPLASH
     L.append("")
     L.append("    // ===== SPLASH =====")
     sp_en = g("splash.enabled")
@@ -427,7 +424,6 @@ def write_config_java(data, pkg):
         L.append("    public static final String SPLASH_LOADER_COLOR = \"#FFFFFFFF\";")
         L.append("    public static final boolean SPLASH_SHOW_LOADER = false;")
 
-    # ONBOARDING
     L.append("")
     L.append("    // ===== ONBOARDING =====")
     onb_en = g("onboarding.enabled")
@@ -472,7 +468,6 @@ def write_config_java(data, pkg):
             L.append(f"    public static final String ONB_S{n}_TEXT = \"\";")
             L.append(f"    public static final String ONB_S{n}_TEXT_COLOR = \"#FFFFFFFF\";")
 
-    # WELCOME
     L.append("")
     L.append("    // ===== WELCOME =====")
     wel_en = g("welcome.enabled")
@@ -498,7 +493,6 @@ def write_config_java(data, pkg):
         L.append("    public static final String WELCOME_TITLE_COLOR = \"#FFFFFFFF\";")
         L.append("    public static final String WELCOME_SUBTITLE_COLOR = \"#FFFFFFFF\";")
 
-    # VPN
     L.append("")
     L.append("    // ===== VPN =====")
     vpn_en = g("vpn.enabled")
@@ -539,7 +533,6 @@ def write_config_java(data, pkg):
             L.append(f'    public static final String VPN_{k} = "";')
         L.append("    public static final boolean VPN_SHOW_RECHECK = false;")
 
-    # WEBVIEW
     L.append("")
     L.append("    // ===== WEBVIEW =====")
     L.append(f"    public static final String WV_URL = {J(g('webview.url'))};")
@@ -580,7 +573,6 @@ def write_config_java(data, pkg):
     L.append(f"    public static final boolean WV_BLOCK_ADS = {B(g('webview.block_ads'))};")
     L.append(f"    public static final boolean WV_SHOW_SPLASH_ON_WEBVIEW = {B(g('webview.show_splash_on_webview'))};")
 
-    # ERRORS
     L.append("")
     L.append("    // ===== ERRORS =====")
     err_en = g("errors.enabled")
@@ -614,7 +606,6 @@ def write_config_java(data, pkg):
             L.append(f'    public static final String ERR_{T}_COLOR = "#FFFFFFFF";')
             L.append(f'    public static final String ERR_{T}_BG = "#FFFFFFFF";')
 
-    # EXIT
     L.append("")
     L.append("    // ===== EXIT =====")
     L.append(f"    public static final boolean EXIT_ENABLED = {B(g('exit.enabled'))};")
@@ -640,7 +631,6 @@ def write_config_java(data, pkg):
     L.append(f"    public static final String EXIT_BTN_CANCEL_COLOR = {J(C(g('exit.btn_cancel_color')))};")
     L.append(f"    public static final String EXIT_BTN_LAYOUT = {J(g('exit.btn_layout'))};")
 
-    # ADVANCED
     L.append("")
     L.append("    // ===== ADVANCED =====")
     L.append(f"    public static final String ADV_OUTPUT_NAME = {J(g('advanced.output_name'))};")
@@ -648,6 +638,7 @@ def write_config_java(data, pkg):
     L.append(f"    public static final int ADV_MIN_SDK = {I(g('advanced.min_sdk'))};")
     L.append(f"    public static final int ADV_TARGET_SDK = {I(g('advanced.target_sdk'))};")
     L.append(f"    public static final String ADV_ARCHITECTURE = {J(g('advanced.architecture'))};")
+    L.append(f"    public static final String ADV_ORIENTATION = {J(g('advanced.orientation'))};")
     L.append(f"    public static final String ADV_DEVELOPER_NAME = {J(g('advanced.developer_name'))};")
     L.append(f"    public static final String ADV_DEVELOPER_EMAIL = {J(g('advanced.developer_email'))};")
     L.append(f"    public static final String ADV_WEBSITE = {J(g('advanced.website'))};")
@@ -655,12 +646,85 @@ def write_config_java(data, pkg):
 
     L.append("}")
 
-    print("========== Config.java ==========")
-    print("\n".join(L))
-    print("========== END ==========")
-
     path.write_text("\n".join(L), encoding="utf-8")
     log(f"✅ Config.java نوشته شد ({len(L)} خط)")
+
+
+def write_manifest(data, pkg):
+    path = ROOT / "app" / "src" / "main" / "AndroidManifest.xml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    cam_perm = ""
+    mic_perm = ""
+    loc_perm = ""
+    if get(data, "webview.camera") in (1, True, "1"):
+        cam_perm = '    <uses-permission android:name="android.permission.CAMERA" />\n'
+    if get(data, "webview.microphone") in (1, True, "1"):
+        mic_perm = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n'
+    if get(data, "webview.geolocation") in (1, True, "1"):
+        loc_perm = ('    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n'
+                    '    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n')
+
+    cam_feature = ""
+    mic_feature = ""
+    loc_feature = ""
+    if cam_perm:
+        cam_feature = '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n'
+    if mic_perm:
+        mic_feature = '    <uses-feature android:name="android.hardware.microphone" android:required="false" />\n'
+    if loc_perm:
+        loc_feature = '    <uses-feature android:name="android.hardware.location" android:required="false" />\n'
+
+    orient = get(data, "advanced.orientation") or "portrait"
+
+    content = f'''<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+{cam_perm}{mic_perm}{loc_perm}
+{cam_feature}{mic_feature}{loc_feature}
+    <application
+        android:name="{pkg}.VistaApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.App"
+        android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        tools:targetApi="34">
+
+        <activity
+            android:name="{pkg}.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.App.Splash"
+            android:screenOrientation="{orient}"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="{pkg}.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.App"
+            android:screenOrientation="{orient}"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|uiMode"
+            android:launchMode="singleTop" />
+
+    </application>
+</manifest>
+'''
+    path.write_text(content, encoding="utf-8")
+    log("✅ AndroidManifest.xml نوشته شد")
 
 
 def write_strings(data):
@@ -902,6 +966,7 @@ def main():
     pkg = get(data, "branding.package_name")
 
     write_config_java(data, pkg)
+    write_manifest(data, pkg)
     write_strings(data)
     write_colors(data)
     write_dimens(data)
