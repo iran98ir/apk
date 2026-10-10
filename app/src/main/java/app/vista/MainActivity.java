@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -33,9 +32,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -53,9 +50,6 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private ErrorView errorView;
     private FrameLayout rootLayout;
-    private LinearLayout welcomeView;
-    private LinearLayout vpnView;
-    private LinearLayout onboardingView;
 
     private boolean pagePreloaded = false;
     private long lastBackPressTime = 0L;
@@ -518,4 +512,4 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onDestroy();
     }
-                                        }
+    }
