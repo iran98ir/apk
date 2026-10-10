@@ -3,11 +3,6 @@
 # inject.py — JSON به Config.java + resources
 # مسیر: scripts/inject.py
 # =========================================================
-# 📌 هیچ پیش‌فرضی نداره
-# 📌 اگه حتی یک فیلد اجباری نباشه → بیلد متوقف می‌شه
-# 📌 فیلدهای عکس (icon_48, ..., splash_logo) استثنا هستن
-# 📌 اگه یه بخش enabled=0 باشه، فیلدهای اون بخش معاف می‌شن
-# =========================================================
 
 import json
 import re
@@ -25,9 +20,6 @@ GRADLE_APP = ROOT / "app" / "build.gradle"
 PKG_OLD = "app.vista"
 
 
-# =========================================================
-# فیلدهایی که همیشه اجباری هستن (مستقل از enabled)
-# =========================================================
 ALWAYS_REQUIRED = [
     "branding.app_name",
     "branding.package_name",
@@ -144,9 +136,6 @@ ALWAYS_REQUIRED = [
 ]
 
 
-# =========================================================
-# فیلدهای وابسته به splash (اگه splash.enabled=1)
-# =========================================================
 SPLASH_REQUIRED = [
     "splash.enabled",
     "splash.duration",
@@ -170,9 +159,6 @@ SPLASH_REQUIRED = [
 ]
 
 
-# =========================================================
-# فیلدهای وابسته به onboarding (اگه onboarding.enabled=1)
-# =========================================================
 ONB_REQUIRED = [
     "onboarding.enabled",
     "onboarding.skip_text",
@@ -183,39 +169,13 @@ ONB_REQUIRED = [
     "onboarding.btn_text_color",
     "onboarding.dot_active",
     "onboarding.dot_inactive",
-    "onboarding.s1_enabled",
-    "onboarding.s1_bg_type",
-    "onboarding.s1_bg_solid",
-    "onboarding.s1_bg_1",
-    "onboarding.s1_bg_2",
-    "onboarding.s1_title",
-    "onboarding.s1_title_color",
-    "onboarding.s1_text",
-    "onboarding.s1_text_color",
-    "onboarding.s2_enabled",
-    "onboarding.s2_bg_type",
-    "onboarding.s2_bg_solid",
-    "onboarding.s2_bg_1",
-    "onboarding.s2_bg_2",
-    "onboarding.s2_title",
-    "onboarding.s2_title_color",
-    "onboarding.s2_text",
-    "onboarding.s2_text_color",
-    "onboarding.s3_enabled",
-    "onboarding.s3_bg_type",
-    "onboarding.s3_bg_solid",
-    "onboarding.s3_bg_1",
-    "onboarding.s3_bg_2",
-    "onboarding.s3_title",
-    "onboarding.s3_title_color",
-    "onboarding.s3_text",
-    "onboarding.s3_text_color",
 ]
+for _n in (1, 2, 3):
+    for _k in ["enabled", "bg_type", "bg_solid", "bg_1", "bg_2",
+               "title", "title_color", "text", "text_color"]:
+        ONB_REQUIRED.append(f"onboarding.s{_n}_{_k}")
 
 
-# =========================================================
-# فیلدهای welcome (اگه welcome.enabled=1)
-# =========================================================
 WELCOME_REQUIRED = [
     "welcome.enabled",
     "welcome.title",
@@ -230,58 +190,26 @@ WELCOME_REQUIRED = [
 ]
 
 
-# =========================================================
-# فیلدهای vpn (اگه vpn.enabled=1)
-# =========================================================
 VPN_REQUIRED = [
     "vpn.enabled",
     "vpn.top_title",
     "vpn.top_subtitle",
     "vpn.footnote",
     "vpn.show_recheck",
-    "vpn.state_on.icon",
-    "vpn.state_on.title",
-    "vpn.state_on.text",
-    "vpn.state_on.color",
-    "vpn.state_on.bg",
-    "vpn.state_on.btn",
-    "vpn.state_off.icon",
-    "vpn.state_off.title",
-    "vpn.state_off.text",
-    "vpn.state_off.color",
-    "vpn.state_off.bg",
-    "vpn.state_off.btn",
-    "vpn.state_unknown.icon",
-    "vpn.state_unknown.title",
-    "vpn.state_unknown.text",
-    "vpn.state_unknown.color",
-    "vpn.state_unknown.bg",
-    "vpn.state_unknown.btn",
-    "vpn.recheck.text",
-    "vpn.recheck.bg",
-    "vpn.recheck.border",
-    "vpn.recheck.color",
 ]
+for _st in ["state_on", "state_off", "state_unknown"]:
+    for _k in ["icon", "title", "text", "color", "bg", "btn"]:
+        VPN_REQUIRED.append(f"vpn.{_st}.{_k}")
+for _k in ["text", "bg", "border", "color"]:
+    VPN_REQUIRED.append(f"vpn.recheck.{_k}")
 
 
-# =========================================================
-# فیلدهای errors — ۹ نوع خطا (اگه errors.enabled=1)
-# =========================================================
 ERROR_TYPES = ["offline", "server", "nf", "fb", "to", "dns", "ssl", "conn", "unk"]
 
-
-def build_errors_required():
-    out = []
-    for t in ERROR_TYPES:
-        out.append(f"errors.{t}_icon")
-        out.append(f"errors.{t}_title")
-        out.append(f"errors.{t}_text")
-        out.append(f"errors.{t}_color")
-        out.append(f"errors.{t}_bg")
-    return out
-
-
-ERRORS_REQUIRED = build_errors_required()
+ERRORS_REQUIRED = []
+for _t in ERROR_TYPES:
+    for _k in ["icon", "title", "text", "color", "bg"]:
+        ERRORS_REQUIRED.append(f"errors.{_t}_{_k}")
 
 
 def log(m):
@@ -312,62 +240,47 @@ def is_present(v):
 
 
 def check_all(data):
-    """همه‌ی فیلدهای اجباری رو چک می‌کنه."""
     missing = []
 
-    # ===== always required =====
     for f in ALWAYS_REQUIRED:
         if not is_present(get(data, f)):
             missing.append(f)
 
-    # ===== splash =====
-    sp_enabled = get(data, "splash.enabled")
-    if sp_enabled in (1, True, "1"):
+    if get(data, "splash.enabled") in (1, True, "1"):
         for f in SPLASH_REQUIRED:
             if not is_present(get(data, f)):
                 missing.append(f)
 
-    # ===== onboarding =====
-    onb_enabled = get(data, "onboarding.enabled")
-    if onb_enabled in (1, True, "1"):
+    if get(data, "onboarding.enabled") in (1, True, "1"):
         for f in ONB_REQUIRED:
             if not is_present(get(data, f)):
                 missing.append(f)
 
-    # ===== welcome =====
-    wel_enabled = get(data, "welcome.enabled")
-    if wel_enabled in (1, True, "1"):
+    if get(data, "welcome.enabled") in (1, True, "1"):
         for f in WELCOME_REQUIRED:
             if not is_present(get(data, f)):
                 missing.append(f)
 
-    # ===== vpn =====
-    vpn_enabled = get(data, "vpn.enabled")
-    if vpn_enabled in (1, True, "1"):
+    if get(data, "vpn.enabled") in (1, True, "1"):
         for f in VPN_REQUIRED:
             if not is_present(get(data, f)):
                 missing.append(f)
 
-    # ===== errors =====
-    err_enabled = get(data, "errors.enabled")
-    if err_enabled in (1, True, "1"):
+    if get(data, "errors.enabled") in (1, True, "1"):
         for f in ERRORS_REQUIRED:
             if not is_present(get(data, f)):
                 missing.append(f)
 
     if missing:
-        unique_missing = sorted(set(missing))
+        unique = sorted(set(missing))
         msg = "این فیلدهای اجباری توی app01.json نیستن یا خالی‌ان:\n  - "
-        msg += "\n  - ".join(unique_missing)
-        msg += f"\n\nتعداد کل: {len(unique_missing)}"
+        msg += "\n  - ".join(unique)
+        msg += f"\n\nتعداد کل: {len(unique)}"
         fail(msg)
 
-    log(f"✅ همه‌ی فیلدهای اجباری موجودن (کل چک: {len(ALWAYS_REQUIRED) + len(SPLASH_REQUIRED) + len(ONB_REQUIRED) + len(WELCOME_REQUIRED) + len(VPN_REQUIRED) + len(ERRORS_REQUIRED)}+ فیلد)")
+    log("✅ همه‌ی فیلدهای اجباری موجودن")
 
 
-# =========================================================
-# ابزارهای کمکی جاوا
-# =========================================================
 def hex_to_android(h):
     h = str(h).strip().lstrip("#")
     if len(h) == 6:
@@ -409,9 +322,6 @@ def C(h):
     return hex_to_android(h)
 
 
-# =========================================================
-# نوشتن Config.java
-# =========================================================
 def write_config_java(data, pkg):
     path = JAVA_SRC_DIR / pkg.replace(".", "/") / "Config.java"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -745,13 +655,14 @@ def write_config_java(data, pkg):
 
     L.append("}")
 
+    print("========== Config.java ==========")
+    print("\n".join(L))
+    print("========== END ==========")
+
     path.write_text("\n".join(L), encoding="utf-8")
     log(f"✅ Config.java نوشته شد ({len(L)} خط)")
 
 
-# =========================================================
-# strings.xml, colors.xml, dimens.xml, styles.xml
-# =========================================================
 def write_strings(data):
     path = RES_DIR / "values" / "strings.xml"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -831,9 +742,6 @@ def write_styles(data):
     log("✅ styles.xml نوشته شد")
 
 
-# =========================================================
-# جابجایی فایل‌های جاوا
-# =========================================================
 def move_java_files(pkg):
     old_dir = JAVA_SRC_DIR / PKG_OLD.replace(".", "/")
     new_dir = JAVA_SRC_DIR / pkg.replace(".", "/")
@@ -865,9 +773,6 @@ def move_java_files(pkg):
     log("✅ پوشه‌ی قدیمی حذف شد")
 
 
-# =========================================================
-# کپی عکس‌ها
-# =========================================================
 def copy_assets():
     target = RES_DIR / "mipmap-xxhdpi"
     target.mkdir(parents=True, exist_ok=True)
@@ -890,9 +795,6 @@ def copy_assets():
         fail("عکس پیدا نشد: assets/splash-logo.png")
 
 
-# =========================================================
-# build.gradle
-# =========================================================
 def write_gradle(data):
     b_pkg = get(data, "branding.package_name")
     b_ver_code = I(get(data, "branding.version_code"))
@@ -985,9 +887,6 @@ dependencies {{
     log("✅ app/build.gradle نوشته شد")
 
 
-# =========================================================
-# main
-# =========================================================
 def main():
     if not CONFIG_FILE.exists():
         fail(f"پیدا نشد: {CONFIG_FILE}")
