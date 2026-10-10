@@ -96,4 +96,4 @@ public class WelcomeView extends FrameLayout {
     private int dp(int v) {
         return (int) (v * getResources().getDisplayMetrics().density);
     }
-      }
+}
