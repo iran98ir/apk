@@ -146,4 +146,16 @@ public class PreloadManager {
         return sIsLoaded && sCachedWebView != null;
     }
 
-    public static void clear()
+    public static void clear() {
+        if (sCachedWebView != null) {
+            try {
+                sCachedWebView.stopLoading();
+                sCachedWebView.loadUrl("about:blank");
+                sCachedWebView.removeAllViews();
+                sCachedWebView.destroy();
+            } catch (Exception ignored) {}
+            sCachedWebView = null;
+        }
+        sIsLoaded = false;
+    }
+}
