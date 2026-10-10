@@ -30,6 +30,11 @@ jobs:
       - name: Run inject.py
         run: python scripts/inject.py
 
+      - name: Show Config.java
+        run: |
+          echo "===== Config.java ====="
+          find app -name "Config.java" -exec cat {} \;
+
       - name: Setup Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
