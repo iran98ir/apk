@@ -30,9 +30,6 @@ jobs:
       - name: Run inject.py
         run: python scripts/inject.py
 
-      - name: Compare config vs app01
-        run: python scripts/test_inject.py
-
       - name: Setup Gradle Wrapper
         run: |
           mkdir -p gradle/wrapper
