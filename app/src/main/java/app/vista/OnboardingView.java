@@ -251,4 +251,4 @@ public class OnboardingView extends FrameLayout {
             }
         }
     }
-                                     }
+                         }
