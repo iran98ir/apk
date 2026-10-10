@@ -72,6 +72,13 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
+      - name: Upload Config.java
+        uses: actions/upload-artifact@v4
+        with:
+          name: ConfigJava
+          path: app/src/main/java/ir/rayan01/Config.java
+          if-no-files-found: warn
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
