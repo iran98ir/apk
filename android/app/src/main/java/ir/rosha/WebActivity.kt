@@ -16,6 +16,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -31,10 +32,17 @@ class WebActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        try {
+            buildNormal()
+        } catch (e: Throwable) {
+            showDebugError(e)
+        }
+    }
 
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun buildNormal() {
         rootLayout = FrameLayout(this)
 
-        // ── نوار پیشرفت ──
         progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         progressBar.max = 100
         progressBar.visibility = View.GONE
@@ -45,7 +53,6 @@ class WebActivity : AppCompatActivity() {
         progressBar.layoutParams = progLp
         rootLayout.addView(progressBar)
 
-        // ── WebView ──
         webView = WebView(this)
         val wvLp = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -60,7 +67,6 @@ class WebActivity : AppCompatActivity() {
         setupClients()
         setupDownloadListener()
 
-        // لود اولیه
         if (Config.webUrl.isNotEmpty()) {
             webView.loadUrl(Config.webUrl)
         } else {
@@ -97,7 +103,6 @@ class WebActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
 
-                // لینک‌های همیشه مرورگر
                 if (Config.webBrowserOnly.isNotEmpty()) {
                     val domains = Config.webBrowserOnly.split(",").map { it.trim() }
                     if (domains.any { url.contains(it, ignoreCase = true) }) {
@@ -106,7 +111,6 @@ class WebActivity : AppCompatActivity() {
                     }
                 }
 
-                // لینک‌های خارجی
                 if (Config.webExtLink) {
                     val mainHost = Uri.parse(Config.webUrl).host ?: ""
                     val thisHost = request.url.host ?: ""
@@ -308,6 +312,21 @@ class WebActivity : AppCompatActivity() {
 
         root.addView(container)
         setContentView(root)
+    }
+
+    private fun showDebugError(e: Throwable) {
+        val scroll = ScrollView(this)
+        val tv = TextView(this)
+        tv.text = "⚠️ WEB ERROR\n\n" +
+                "Class: ${e.javaClass.name}\n\n" +
+                "Message: ${e.message}\n\n" +
+                "Stack:\n${e.stackTraceToString()}"
+        tv.setTextColor(Color.RED)
+        tv.setBackgroundColor(Color.WHITE)
+        tv.textSize = 12f
+        tv.setPadding(dp(16), dp(16), dp(16), dp(16))
+        scroll.addView(tv)
+        setContentView(scroll)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
