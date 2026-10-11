@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
+android {
+    namespace "@PKG@"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "@PKG@"
+        minSdk 21
+        targetSdk 34
+        versionCode @VCODE@
+        versionName "@VER@"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("keystore/release.jks")
+            storePassword System.getenv("KEYSTORE_PASS") ?: (keystoreProps['storePassword'] ?: "")
+            keyAlias     System.getenv("KEY_ALIAS")     ?: (keystoreProps['keyAlias'] ?: "")
+            keyPassword  System.getenv("KEY_PASS")      ?: (keystoreProps['keyPassword'] ?: "")
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.webkit:webkit:1.9.0'
+}
