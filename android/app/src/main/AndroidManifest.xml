@@ -49,12 +49,16 @@
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/AppTheme">
+
+            <!-- DEEPLINK_START -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="@DEeplinkScheme@" android:host="@DeepLinkHost@"/>
+                <data android:scheme="@DeepLinkScheme@" android:host="@DeepLinkHost@"/>
             </intent-filter>
+            <!-- DEEPLINK_END -->
+
         </activity>
 
     </application>
