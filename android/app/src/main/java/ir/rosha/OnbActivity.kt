@@ -8,34 +8,39 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 
 class OnbActivity : AppCompatActivity() {
 
+    private var pager: ViewPager2? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        try {
+            buildNormal()
+        } catch (e: Throwable) {
+            showDebugError(e)
+        }
+    }
+
+    private fun buildNormal() {
         val total = if (Config.onbCount == "2") 2 else 3
 
         val root = FrameLayout(this)
         root.setBackgroundColor(Color.parseColor(Config.onbBg))
 
-        val pager = ViewPager2(this)
-        pager.layoutParams = FrameLayout.LayoutParams(
+        pager = ViewPager2(this)
+        pager?.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
-        pager.adapter = OnbAdapter(total)
-        pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                // به‌روزرسانی نقطه‌ها
-            }
-        })
+        pager?.adapter = OnbAdapter(total)
         root.addView(pager)
 
-        // نشانگرهای پایین
         val dots = LinearLayout(this)
         dots.orientation = LinearLayout.HORIZONTAL
         dots.gravity = Gravity.CENTER
@@ -63,7 +68,6 @@ class OnbActivity : AppCompatActivity() {
 
         setContentView(root)
 
-        // علامت‌گذاری انبوردینگ به‌عنوان دیده‌شده
         getSharedPreferences("app_prefs", MODE_PRIVATE)
             .edit()
             .putBoolean("onb_seen", true)
@@ -92,79 +96,4 @@ class OnbActivity : AppCompatActivity() {
             val v = holder.view
             v.removeAllViews()
 
-            val page = Config.onbPage(position)
-            val iconSvg = page.optString("iconSvg", "")
-            val iconColor = page.optString("iconColor", "#4F46E5")
-            val iconColorOn = page.optBoolean("iconColorOn", true)
-            val iconBgOn = page.optBoolean("iconBgOn", true)
-            val iconBg = page.optString("iconBg", "#EEF2FF")
-            val iconShape = page.optString("iconShape", "circle")
-            val boxSize = page.optInt("iconBoxSize", 140)
-            val iconSize = page.optInt("iconSize", 70)
-            val title = page.optString("t", "")
-            val desc = page.optString("d", "")
-            val tSize = page.optInt("tSize", 24)
-            val dSize = page.optInt("dSize", 16)
-
-            val iconBox = FrameLayout(this@OnbActivity)
-            val boxPx = dp(boxSize)
-            val lp = LinearLayout.LayoutParams(boxPx, boxPx)
-            lp.bottomMargin = dp(28)
-            iconBox.layoutParams = lp
-
-            if (iconBgOn) {
-                val shape = android.graphics.drawable.GradientDrawable()
-                shape.shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                shape.setColor(Color.parseColor(iconBg))
-                shape.cornerRadius = when (iconShape) {
-                    "circle"   -> boxPx / 2f
-                    "rounded"  -> boxPx * 0.22f
-                    "square"   -> 0f
-                    "squircle" -> boxPx * 0.30f
-                    else       -> boxPx / 2f
-                }
-                iconBox.background = shape
-            }
-
-            val iv = ImageView(this@OnbActivity)
-            val ivPx = dp(iconSize)
-            val ivLp = FrameLayout.LayoutParams(ivPx, ivPx)
-            ivLp.gravity = Gravity.CENTER
-            iv.layoutParams = ivLp
-            SvgLoader.loadInto(iv, iconSvg, iconColor, iconColorOn)
-            iconBox.addView(iv)
-
-            v.addView(iconBox)
-
-            val tvTitle = TextView(this@OnbActivity)
-            tvTitle.text = title
-            tvTitle.setTextColor(Color.parseColor(Config.onbTxt))
-            tvTitle.textSize = tSize.toFloat()
-            tvTitle.setTypeface(tvTitle.typeface, android.graphics.Typeface.BOLD)
-            tvTitle.gravity = Gravity.CENTER
-            v.addView(tvTitle)
-
-            val tvDesc = TextView(this@OnbActivity)
-            tvDesc.text = desc
-            tvDesc.setTextColor(Color.parseColor(Config.onbTxt))
-            tvDesc.alpha = 0.72f
-            tvDesc.textSize = dSize.toFloat()
-            tvDesc.gravity = Gravity.CENTER
-            tvDesc.setPadding(0, dp(12), 0, 0)
-            v.addView(tvDesc)
-        }
-
-        override fun getItemCount(): Int = total
-    }
-
-    override fun onBackPressed() {
-        val pager = (findViewById<FrameLayout>(android.R.id.content).getChildAt(0) as? ViewPager2)
-        if (pager != null && pager.currentItem > 0) {
-            pager.currentItem = pager.currentItem - 1
-        } else {
-            super.onBackPressed()
-        }
-    }
-
-    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
-}
+            val page = Config.onb
