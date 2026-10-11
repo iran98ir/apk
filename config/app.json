@@ -1,0 +1,190 @@
+{
+    "brand": {
+        "mode": "update",
+        "name": "عنوان 2_B 222",
+        "pkg": "ir.test222.app2",
+        "ver": "مقدار 2_B 222",
+        "vcode": 222
+    },
+    "splash": {
+        "bgMode": "gradient",
+        "bg": "#DC2626",
+        "bg2": "#DC2626",
+        "bgAngle": 360,
+        "hasIcon": false,
+        "hasText": false,
+        "title": "عنوان 2_B 222",
+        "tSize": 46,
+        "txt": "#DC2626",
+        "iconPos": "center",
+        "textPos": "center"
+    },
+    "onb": {
+        "pages": [
+            {
+                "t": "عنوان 2_B 222",
+                "tSize": 38,
+                "d": "توضیحات حالت 2_B",
+                "dSize": 26,
+                "iconPos": "center",
+                "textPos": "center",
+                "iconSvg": "",
+                "iconColor": "#4F46E5",
+                "iconBg": "#EEF2FF",
+                "iconShape": "circle",
+                "iconSize": 70,
+                "iconBoxSize": 140,
+                "iconBgOn": true,
+                "iconColorOn": true
+            },
+            {
+                "t": "عنوان 2_B 222",
+                "tSize": 38,
+                "d": "توضیحات حالت 2_B",
+                "dSize": 26,
+                "iconPos": "center",
+                "textPos": "center",
+                "iconSvg": "",
+                "iconColor": "#4F46E5",
+                "iconBg": "#EEF2FF",
+                "iconShape": "circle",
+                "iconSize": 70,
+                "iconBoxSize": 140,
+                "iconBgOn": true,
+                "iconColorOn": true
+            },
+            {
+                "t": "عنوان 2_B 222",
+                "tSize": 38,
+                "d": "توضیحات حالت 2_B",
+                "dSize": 26,
+                "iconPos": "center",
+                "textPos": "center",
+                "iconSvg": "",
+                "iconColor": "#4F46E5",
+                "iconBg": "#EEF2FF",
+                "iconShape": "circle",
+                "iconSize": 70,
+                "iconBoxSize": 140,
+                "iconBgOn": true,
+                "iconColorOn": true
+            }
+        ],
+        "active": false,
+        "firstRunOnly": false,
+        "count": "3",
+        "bgMode": "gradient",
+        "bg": "#DC2626",
+        "bg2": "#DC2626",
+        "bgAngle": 360,
+        "txt": "#DC2626",
+        "totalPages": 3
+    },
+    "welcome": {
+        "active": false,
+        "bgMode": "gradient",
+        "bg": "#DC2626",
+        "bg2": "#DC2626",
+        "bgAngle": 360,
+        "txt": "#DC2626",
+        "hasIcon": false,
+        "t": "عنوان 2_B 222",
+        "tSize": 46,
+        "d": "توضیحات حالت 2_B",
+        "dSize": 26,
+        "btn": "دکمه 2_B",
+        "btnShape": "pill",
+        "btnStyle": "flat",
+        "btnBg": "#DC2626",
+        "btnTxt": "#DC2626",
+        "btnSize": 24,
+        "btnRadius": 38,
+        "iconPos": "center",
+        "textPos": "center",
+        "btnPos": "center"
+    },
+    "web": {
+        "url": "https://test222.example.com_B",
+        "extLink": false,
+        "deepLink": false,
+        "deepLinkUrl": "مقدار 2_B 222",
+        "keepSession": false,
+        "browserOnly": "مقدار 2_B 222"
+    },
+    "exit": {
+        "active": false,
+        "t": "عنوان 2_B 222",
+        "m": "توضیحات حالت 2_B",
+        "bg": "#DC2626",
+        "txt": "#DC2626",
+        "tSize": 26,
+        "mSize": 20,
+        "btnSize": 22,
+        "anim": "fade",
+        "yes": "مقدار 2_B 222",
+        "no": "مقدار 2_B 222",
+        "yesBg": "#DC2626",
+        "yesTxt": "#DC2626",
+        "noBg": "#DC2626",
+        "noTxt": "#DC2626",
+        "btnShape": "pill",
+        "btnStyle": "flat",
+        "btnLayout": "col"
+    },
+    "error": {
+        "items": {
+            "offline": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "timeout": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "dns": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "ssl": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "e404": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "e500": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "down": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            },
+            "unknown": {
+                "t": "مقدار 2_B 222",
+                "on": false,
+                "d": "مقدار 2_B 222"
+            }
+        },
+        "active": false,
+        "bgMode": "single",
+        "bg": "#DC2626",
+        "bg2": "#DC2626",
+        "bgAngle": 135,
+        "txt": "#DC2626",
+        "tSize": 30,
+        "dSize": 20,
+        "retryText": "دکمه 2_B",
+        "btnBg": "#DC2626",
+        "btnShape": "pill",
+        "btnStyle": "flat"
+    }
+    }
