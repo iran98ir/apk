@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -19,6 +20,14 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        try {
+            buildNormalSplash()
+        } catch (e: Throwable) {
+            showDebugError(e)
+        }
+    }
+
+    private fun buildNormalSplash() {
         val root = FrameLayout(this)
         root.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -83,14 +92,33 @@ class SplashActivity : AppCompatActivity() {
 
         // ── انتقال ──
         Handler(Looper.getMainLooper()).postDelayed({
-            val intent = when {
-                Config.onbActive && shouldShowOnb() -> Intent(this, OnbActivity::class.java)
-                Config.welcomeActive -> Intent(this, WelcomeActivity::class.java)
-                else -> Intent(this, WebActivity::class.java)
+            try {
+                val intent = when {
+                    Config.onbActive && shouldShowOnb() -> Intent(this, OnbActivity::class.java)
+                    Config.welcomeActive -> Intent(this, WelcomeActivity::class.java)
+                    else -> Intent(this, WebActivity::class.java)
+                }
+                startActivity(intent)
+                finish()
+            } catch (e: Throwable) {
+                showDebugError(e)
             }
-            startActivity(intent)
-            finish()
         }, 2000)
+    }
+
+    private fun showDebugError(e: Throwable) {
+        val scroll = ScrollView(this)
+        val tv = TextView(this)
+        tv.text = "⚠️ SPLASH ERROR\n\n" +
+                "Class: ${e.javaClass.name}\n\n" +
+                "Message: ${e.message}\n\n" +
+                "Stack:\n${e.stackTraceToString()}"
+        tv.setTextColor(Color.RED)
+        tv.setBackgroundColor(Color.WHITE)
+        tv.textSize = 12f
+        tv.setPadding(dp(16), dp(16), dp(16), dp(16))
+        scroll.addView(tv)
+        setContentView(scroll)
     }
 
     private fun shouldShowOnb(): Boolean {
