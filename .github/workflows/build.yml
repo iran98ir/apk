@@ -102,15 +102,35 @@ jobs:
       - name: Inject config values
         run: |
           python3 - <<'PY'
-          import json, re, pathlib
+          import json, pathlib
           d = json.load(open("config/app.json", encoding="utf-8"))
 
-          # ── AndroidManifest: package ──
+          # ── AndroidManifest: package + deeplink ──
           pkg = d["brand"]["pkg"]
           manifest = pathlib.Path("android/app/src/main/AndroidManifest.xml")
           if manifest.exists():
               txt = manifest.read_text(encoding="utf-8")
               txt = txt.replace("@PKG@", pkg)
+
+              web = d.get("web", {})
+              if web.get("deepLink", True) and web.get("deepLinkUrl"):
+                  url = web["deepLinkUrl"]
+                  # استخراج scheme و host از deepLinkUrl
+                  m = re.match(r'^([a-zA-Z][a-zA-Z0-9+\-.]*):\/\/([^\/]+)', url)
+                  if m:
+                      txt = txt.replace("@DeepLinkScheme@", m.group(1))
+                      txt = txt.replace("@DeepLinkHost@", m.group(2))
+                  else:
+                      # حذف کل intent-filter اگه فرمت نامعتبر
+                      txt = re.sub(
+                          r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->',
+                          '', txt, flags=re.DOTALL
+                      )
+              else:
+                  txt = re.sub(
+                      r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->',
+                      '', txt, flags=re.DOTALL
+                  )
               manifest.write_text(txt, encoding="utf-8")
 
           # ── strings.xml ──
@@ -136,10 +156,9 @@ jobs:
           c = pathlib.Path("android/app/src/main/res/values/colors.xml")
           if c.exists():
               ct = c.read_text(encoding="utf-8")
-              th = d.get("splash", {})
               crepl = {
-                  "@SPLASH_BG@":   th.get("bg", "#FFFFFF"),
-                  "@SPLASH_TXT@":  th.get("txt", "#000000"),
+                  "@SPLASH_BG@":   d.get("splash",{}).get("bg", "#FFFFFF"),
+                  "@SPLASH_TXT@":  d.get("splash",{}).get("txt", "#000000"),
                   "@WELCOME_BG@":  d.get("welcome",{}).get("bg", "#FFFFFF"),
                   "@WELCOME_TXT@": d.get("welcome",{}).get("txt", "#000000"),
                   "@ERROR_BG@":    d.get("error",{}).get("bg", "#FFFFFF"),
@@ -169,21 +188,22 @@ jobs:
           print("✓ مقادیر تزریق شد")
           PY
 
-      # ─────────────── ۶) Keystore ───────────────
-      - name: Setup keystore
+      # ─────────────── ۶) Keystore check ───────────────
+      - name: Check keystore
         run: |
-          mkdir -p android/app/keystore
-          if [ -f "android/app/keystore/release.jks" ]; then
-            echo "✓ keystore موجود است"
-          else
+          if [ ! -f "android/app/keystore/release.jks" ]; then
             echo "::error::فایل keystore پیدا نشد — android/app/keystore/release.jks"
             exit 1
           fi
+          echo "✓ keystore موجود است"
 
-      # ─────────────── ۷) Gradle ───────────────
-      - name: Grant gradlew
-        run: chmod +x android/gradlew
+      # ─────────────── ۷) Setup Gradle ───────────────
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.2.1
 
+      # ─────────────── ۸) Build APK ───────────────
       - name: Build Release APK
         working-directory: android
         env:
@@ -195,9 +215,9 @@ jobs:
             echo "::error::کلیدهای امضا در Secrets تنظیم نشده‌اند"
             exit 1
           fi
-          ./gradlew assembleRelease --no-daemon
+          gradle assembleRelease --no-daemon
 
-      # ─────────────── ۸) Upload ───────────────
+      # ─────────────── ۹) Upload APK ───────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
