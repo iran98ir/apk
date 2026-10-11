@@ -27,7 +27,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      # ─────────────── ۴) Validate app.json ───────────────
+      # ─────────────── ۴) Validate assets ───────────────
+      - name: Validate assets
+        run: |
+          if [ ! -f "assets/icon.png" ]; then
+            echo "::error::فایل assets/icon.png پیدا نشد"
+            exit 1
+          fi
+          if [ ! -f "assets/round.png" ]; then
+            echo "::error::فایل assets/round.png پیدا نشد"
+            exit 1
+          fi
+          echo "✓ assets کامل است"
+
+      # ─────────────── ۵) Validate app.json ───────────────
       - name: Validate config/app.json
         run: |
           python3 - <<'PY'
@@ -98,7 +111,17 @@ jobs:
           print("✓ app.json معتبر است")
           PY
 
-      # ─────────────── ۵) Inject values ───────────────
+      # ─────────────── ۶) Copy icons to mipmap ───────────────
+      - name: Copy icons to mipmap folders
+        run: |
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "android/app/src/main/res/mipmap-$density"
+            cp assets/icon.png  "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+            cp assets/round.png "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
+          done
+          echo "✓ آیکون‌ها در ۵ پوشه mipmap کپی شدند"
+
+      # ─────────────── ۷) Inject values ───────────────
       - name: Inject config values
         run: |
           python3 - <<'PY'
@@ -186,7 +209,7 @@ jobs:
           print("✓ مقادیر تزریق شد")
           PY
 
-      # ─────────────── ۶) Keystore check ───────────────
+      # ─────────────── ۸) Keystore check ───────────────
       - name: Check keystore
         run: |
           if [ ! -f "android/app/keystore/release.jks" ]; then
@@ -195,13 +218,13 @@ jobs:
           fi
           echo "✓ keystore موجود است"
 
-      # ─────────────── ۷) Setup Gradle ───────────────
+      # ─────────────── ۹) Setup Gradle ───────────────
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 8.2.1
 
-      # ─────────────── ۸) Build APK ───────────────
+      # ─────────────── ۱۰) Build APK ───────────────
       - name: Build Release APK
         working-directory: android
         env:
@@ -215,7 +238,7 @@ jobs:
           fi
           gradle assembleRelease --no-daemon
 
-      # ─────────────── ۹) Upload APK ───────────────
+      # ─────────────── ۱۱) Upload APK ───────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
