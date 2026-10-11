@@ -102,7 +102,7 @@ jobs:
       - name: Inject config values
         run: |
           python3 - <<'PY'
-          import json, pathlib
+          import json, pathlib, re
           d = json.load(open("config/app.json", encoding="utf-8"))
 
           # ── AndroidManifest: package + deeplink ──
@@ -115,13 +115,11 @@ jobs:
               web = d.get("web", {})
               if web.get("deepLink", True) and web.get("deepLinkUrl"):
                   url = web["deepLinkUrl"]
-                  # استخراج scheme و host از deepLinkUrl
                   m = re.match(r'^([a-zA-Z][a-zA-Z0-9+\-.]*):\/\/([^\/]+)', url)
                   if m:
                       txt = txt.replace("@DeepLinkScheme@", m.group(1))
                       txt = txt.replace("@DeepLinkHost@", m.group(2))
                   else:
-                      # حذف کل intent-filter اگه فرمت نامعتبر
                       txt = re.sub(
                           r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->',
                           '', txt, flags=re.DOTALL
