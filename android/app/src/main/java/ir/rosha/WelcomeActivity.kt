@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -17,10 +18,17 @@ class WelcomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        try {
+            buildNormal()
+        } catch (e: Throwable) {
+            showDebugError(e)
+        }
+    }
+
+    private fun buildNormal() {
         val root = FrameLayout(this)
         root.setBackgroundColor(Color.parseColor(Config.welcomeBg))
 
-        // سه ردیف: بالا / وسط / پایین
         val topRow = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -34,7 +42,6 @@ class WelcomeActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
         }
 
-        // ── آیکون ──
         if (Config.welcomeHasIcon && Config.welcomeIconPos != "hidden") {
             val iconBox = buildIconBox()
             when (Config.welcomeIconPos) {
@@ -44,7 +51,6 @@ class WelcomeActivity : AppCompatActivity() {
             }
         }
 
-        // ── متن + زیرمتن ──
         if (Config.welcomeTextPos != "hidden") {
             val textBlock = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
@@ -75,7 +81,6 @@ class WelcomeActivity : AppCompatActivity() {
             }
         }
 
-        // ── دکمه ورود ──
         if (Config.welcomeBtnPos != "hidden") {
             val btn = buildLoginButton()
             val wrapper = LinearLayout(this).apply {
@@ -90,7 +95,6 @@ class WelcomeActivity : AppCompatActivity() {
             }
         }
 
-        // چیدمان سه ردیفه
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = FrameLayout.LayoutParams(
@@ -193,6 +197,21 @@ class WelcomeActivity : AppCompatActivity() {
         }
 
         return btn
+    }
+
+    private fun showDebugError(e: Throwable) {
+        val scroll = ScrollView(this)
+        val tv = TextView(this)
+        tv.text = "⚠️ WELCOME ERROR\n\n" +
+                "Class: ${e.javaClass.name}\n\n" +
+                "Message: ${e.message}\n\n" +
+                "Stack:\n${e.stackTraceToString()}"
+        tv.setTextColor(Color.RED)
+        tv.setBackgroundColor(Color.WHITE)
+        tv.textSize = 12f
+        tv.setPadding(dp(16), dp(16), dp(16), dp(16))
+        scroll.addView(tv)
+        setContentView(scroll)
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
