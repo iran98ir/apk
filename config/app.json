@@ -11,7 +11,7 @@
         "bg": "#FF00FF",
         "bg2": "#FF9EDB",
         "bgAngle": 195,
-        "hasIcon": true,
+        "hasIcon": false,
         "iconSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"icon icon-tabler icons-tabler-outline icon-tabler-scissors\">\n\t<path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\" />\n\t<path d=\"M3 7a3 3 0 1 0 6 0a3 3 0 1 0 -6 0\" />\n\t<path d=\"M3 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0\" />\n\t<path d=\"M8.6 8.6l10.4 10.4\" />\n\t<path d=\"M8.6 15.4l10.4 -10.4\" />\n</svg>",
         "iconColorOn": true,
         "iconColor": "#DC2626",
@@ -20,7 +20,7 @@
         "iconShape": "circle",
         "iconBoxSize": 140,
         "iconSize": 140,
-        "hasText": true,
+        "hasText": false,
         "title": "مومو",
         "tSize": 24,
         "txt": "#9C63F2",
@@ -78,7 +78,7 @@
                 "textPos": "center"
             }
         ],
-        "active": true,
+        "active": false,
         "firstRunOnly": true,
         "count": "2",
         "bgMode": "gradient",
@@ -89,11 +89,11 @@
         "totalPages": 2
     },
     "welcome": {
-        "active": true,
+        "active": false,
         "bgMode": "gradient",
         "bg": "#FFB5FD",
         "bg2": "#FFB5FD",
-        "bgAngle": 360,
+        "bgAngle": 95,
         "txt": "#7C3AED",
         "hasIcon": true,
         "iconSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z\"/></svg>",
@@ -128,7 +128,7 @@
         "browserOnly": "https://rosha-24.ir/theme-1/login.php"
     },
     "exit": {
-        "active": true,
+        "active": false,
         "t": "میخوای بری",
         "m": "توضیحات حالت 2_B",
         "bg": "#000000",
@@ -254,7 +254,7 @@
                 "d": "مقدار 2_B 222"
             }
         },
-        "active": true,
+        "active": false,
         "bgMode": "single",
         "bg": "#DC2626",
         "bg2": "#DC2626",
