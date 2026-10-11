@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_bg">@SPLASH_BG@</color>
+    <color name="splash_txt">@SPLASH_TXT@</color>
+    <color name="welcome_bg">@WELCOME_BG@</color>
+    <color name="welcome_txt">@WELCOME_TXT@</color>
+    <color name="error_bg">@ERROR_BG@</color>
+    <color name="error_txt">@ERROR_TXT@</color>
+</resources>
