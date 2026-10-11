@@ -111,7 +111,28 @@ jobs:
           print("✓ app.json معتبر است")
           PY
 
-      # ─────────────── ۶) Copy icons to mipmap ───────────────
+      # ─────────────── ۶) Generate keystore if missing ───────────────
+      - name: Generate keystore if missing
+        run: |
+          mkdir -p android/app/keystore
+          if [ ! -f "android/app/keystore/release.jks" ]; then
+            if [ -z "${{ secrets.KEY_ALIAS }}" ] || [ -z "${{ secrets.KEYSTORE_PASS }}" ] || [ -z "${{ secrets.KEY_PASS }}" ]; then
+              echo "::error::Secrets تنظیم نشده‌اند: KEYSTORE_PASS, KEY_ALIAS, KEY_PASS"
+              exit 1
+            fi
+            keytool -genkeypair -v \
+              -keystore android/app/keystore/release.jks \
+              -alias "${{ secrets.KEY_ALIAS }}" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "${{ secrets.KEYSTORE_PASS }}" \
+              -keypass "${{ secrets.KEY_PASS }}" \
+              -dname "CN=Rosh, OU=App, O=Rosh, L=Tehran, S=Tehran, C=IR"
+            echo "✓ keystore جدید ساخته شد"
+          else
+            echo "✓ keystore موجود است"
+          fi
+
+      # ─────────────── ۷) Copy icons to mipmap ───────────────
       - name: Copy icons to mipmap folders
         run: |
           for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
@@ -121,7 +142,7 @@ jobs:
           done
           echo "✓ آیکون‌ها در ۵ پوشه mipmap کپی شدند"
 
-      # ─────────────── ۷) Inject values ───────────────
+      # ─────────────── ۸) Inject values ───────────────
       - name: Inject config values
         run: |
           python3 - <<'PY'
@@ -209,15 +230,6 @@ jobs:
           print("✓ مقادیر تزریق شد")
           PY
 
-      # ─────────────── ۸) Keystore check ───────────────
-      - name: Check keystore
-        run: |
-          if [ ! -f "android/app/keystore/release.jks" ]; then
-            echo "::error::فایل keystore پیدا نشد — android/app/keystore/release.jks"
-            exit 1
-          fi
-          echo "✓ keystore موجود است"
-
       # ─────────────── ۹) Setup Gradle ───────────────
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
@@ -232,10 +244,6 @@ jobs:
           KEY_ALIAS:     ${{ secrets.KEY_ALIAS }}
           KEY_PASS:      ${{ secrets.KEY_PASS }}
         run: |
-          if [ -z "$KEYSTORE_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
-            echo "::error::کلیدهای امضا در Secrets تنظیم نشده‌اند"
-            exit 1
-          fi
           gradle assembleRelease --no-daemon
 
       # ─────────────── ۱۱) Upload APK ───────────────
@@ -244,4 +252,12 @@ jobs:
         with:
           name: release-apk
           path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      # ─────────────── ۱۲) Upload keystore (backup) ───────────────
+      - name: Upload keystore backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-keystore
+          path: android/app/keystore/release.jks
           if-no-files-found: error
