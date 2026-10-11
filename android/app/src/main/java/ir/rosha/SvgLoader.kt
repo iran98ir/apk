@@ -1,18 +1,14 @@
 package ir.rosha
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Picture
 import android.graphics.drawable.PictureDrawable
+import android.util.Log
 import android.widget.ImageView
 import com.caverock.androidsvg.SVG
 
-/**
- * SvgLoader — بارگذاری SVG در ImageView
- * رنگ‌آمیزی خودکار با رنگ مشخص‌شده
- */
 object SvgLoader {
 
     fun loadInto(iv: ImageView, svgCode: String, color: String, colorOn: Boolean) {
@@ -22,7 +18,12 @@ object SvgLoader {
         }
 
         try {
-            var finalSvg = svgCode
+            var finalSvg = svgCode.trim()
+
+            // اگه SVG ناقصه، یه wrapper اضافه کن
+            if (!finalSvg.startsWith("<svg") && !finalSvg.startsWith("<?xml")) {
+                Log.w("SvgLoader", "SVG does not start with <svg")
+            }
 
             if (colorOn && color.isNotBlank()) {
                 finalSvg = finalSvg.replace("currentColor", color, ignoreCase = true)
@@ -34,7 +35,8 @@ object SvgLoader {
             val svg = SVG.getFromString(finalSvg)
             val drawable = PictureDrawable(svg.renderToPicture())
             iv.setImageDrawable(drawable)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            Log.e("SvgLoader", "SVG load failed: ${e.message}", e)
             iv.setImageDrawable(null)
         }
     }
@@ -52,7 +54,8 @@ object SvgLoader {
             val canvas = Canvas(bmp)
             canvas.drawPicture(picture)
             bmp
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            Log.e("SvgLoader", "SVG render failed: ${e.message}", e)
             null
         }
     }
