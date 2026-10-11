@@ -1,3 +1,4 @@
+
 {
     "brand": {
         "mode": "new",
@@ -122,10 +123,10 @@
     "web": {
         "url": "https://rosha-24.ir/panel/h-panel.php",
         "extLink": false,
-        "deepLink": true,
-        "deepLinkUrl": "https://rosha-24.ir/app/app1/",
-        "keepSession": true,
-        "browserOnly": "https://rosha-24.ir/theme-1/login.php"
+        "deepLink": false,
+        "deepLinkUrl": "https://rosha-24.ir/theme-1/login.php",
+        "keepSession": false,
+        "browserOnly": ""
     },
     "exit": {
         "active": false,
