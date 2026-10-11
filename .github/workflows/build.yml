@@ -10,24 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ─────────────── ۱) Checkout ───────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ─────────────── ۲) Setup JDK ───────────────
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # ─────────────── ۳) Setup Python ───────────────
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # ─────────────── ۴) Validate assets ───────────────
       - name: Validate assets
         run: |
           if [ ! -f "assets/icon.png" ]; then
@@ -40,7 +36,6 @@ jobs:
           fi
           echo "✓ assets کامل است"
 
-      # ─────────────── ۵) Validate app.json ───────────────
       - name: Validate config/app.json
         run: |
           python3 - <<'PY'
@@ -68,40 +63,25 @@ jobs:
                   return None
               return cur
 
-          # برندینگ
           req("brand.mode", "حالت اپ")
           req("brand.name", "نام اپ")
           pkg = req("brand.pkg", "نام پکیج")
           req("brand.ver",   "نسخه")
           req("brand.vcode", "کد نسخه")
-
-          # اسپلش
           req("splash.bg", "رنگ پس‌زمینه اسپلش")
           req("splash.txt", "رنگ متن اسپلش")
-
-          # ولکام
-          if d.get("welcome", {}).get("active", True):
-              req("welcome.bg", "رنگ پس‌زمینه ولکام")
-              req("welcome.txt", "رنگ متن ولکام")
-
-          # خطا
           req("error.bg",  "رنگ پس‌زمینه خطا")
           req("error.txt", "رنگ متن خطا")
-
-          # وب‌ویوئر
           url = req("web.url", "لینک وب‌ویوئر")
 
-          # اعتبار پکیج
           if pkg and not re.match(r'^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$', pkg):
               errs.append("فرمت نام پکیج نامعتبر است")
 
-          # اعتبار URL
           if url and not re.match(r'^https?://.+', url):
               errs.append("آدرس وب‌ویوئر باید با http/https شروع شود")
 
-          # اعتبار حالت
           if d.get("brand", {}).get("mode") not in ("new", "update"):
-              errs.append("حالت اپ نامعتبر است (باید new یا update باشد)")
+              errs.append("حالت اپ نامعتبر است")
 
           if errs:
               for e in errs:
@@ -111,13 +91,12 @@ jobs:
           print("✓ app.json معتبر است")
           PY
 
-      # ─────────────── ۶) Generate keystore if missing ───────────────
       - name: Generate keystore if missing
         run: |
           mkdir -p android/app/keystore
           if [ ! -f "android/app/keystore/release.jks" ]; then
             if [ -z "${{ secrets.KEY_ALIAS }}" ] || [ -z "${{ secrets.KEYSTORE_PASS }}" ] || [ -z "${{ secrets.KEY_PASS }}" ]; then
-              echo "::error::Secrets تنظیم نشده‌اند: KEYSTORE_PASS, KEY_ALIAS, KEY_PASS"
+              echo "::error::Secrets تنظیم نشده‌اند"
               exit 1
             fi
             keytool -genkeypair -v \
@@ -132,7 +111,6 @@ jobs:
             echo "✓ keystore موجود است"
           fi
 
-      # ─────────────── ۷) Copy icons to mipmap ───────────────
       - name: Copy icons to mipmap folders
         run: |
           for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
@@ -140,16 +118,14 @@ jobs:
             cp assets/icon.png  "android/app/src/main/res/mipmap-$density/ic_launcher.png"
             cp assets/round.png "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
           done
-          echo "✓ آیکون‌ها در ۵ پوشه mipmap کپی شدند"
+          echo "✓ آیکون‌ها کپی شدند"
 
-      # ─────────────── ۸) Inject values ───────────────
       - name: Inject config values
         run: |
           python3 - <<'PY'
           import json, pathlib, re
           d = json.load(open("config/app.json", encoding="utf-8"))
 
-          # ── AndroidManifest: package + deeplink ──
           pkg = d["brand"]["pkg"]
           manifest = pathlib.Path("android/app/src/main/AndroidManifest.xml")
           if manifest.exists():
@@ -164,18 +140,11 @@ jobs:
                       txt = txt.replace("@DeepLinkScheme@", m.group(1))
                       txt = txt.replace("@DeepLinkHost@", m.group(2))
                   else:
-                      txt = re.sub(
-                          r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->',
-                          '', txt, flags=re.DOTALL
-                      )
+                      txt = re.sub(r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->', '', txt, flags=re.DOTALL)
               else:
-                  txt = re.sub(
-                      r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->',
-                      '', txt, flags=re.DOTALL
-                  )
+                  txt = re.sub(r'<!-- DEEPLINK_START -->.*?<!-- DEEPLINK_END -->', '', txt, flags=re.DOTALL)
               manifest.write_text(txt, encoding="utf-8")
 
-          # ── strings.xml ──
           s = pathlib.Path("android/app/src/main/res/values/strings.xml")
           if s.exists():
               st = s.read_text(encoding="utf-8")
@@ -194,7 +163,6 @@ jobs:
                   st = st.replace(k, str(v).replace("&","&amp;").replace("<","&lt;"))
               s.write_text(st, encoding="utf-8")
 
-          # ── colors.xml ──
           c = pathlib.Path("android/app/src/main/res/values/colors.xml")
           if c.exists():
               ct = c.read_text(encoding="utf-8")
@@ -210,7 +178,6 @@ jobs:
                   ct = ct.replace(k, str(v))
               c.write_text(ct, encoding="utf-8")
 
-          # ── app/build.gradle ──
           g = pathlib.Path("android/app/build.gradle")
           if g.exists():
               gt = g.read_text(encoding="utf-8")
@@ -219,7 +186,6 @@ jobs:
               gt = gt.replace("@VCODE@", str(d["brand"]["vcode"]))
               g.write_text(gt, encoding="utf-8")
 
-          # ── کپی app.json به assets ──
           assets_dir = pathlib.Path("android/app/src/main/assets")
           assets_dir.mkdir(parents=True, exist_ok=True)
           (assets_dir / "app.json").write_text(
@@ -230,13 +196,11 @@ jobs:
           print("✓ مقادیر تزریق شد")
           PY
 
-      # ─────────────── ۹) Setup Gradle ───────────────
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 8.2.1
 
-      # ─────────────── ۱۰) Build APK ───────────────
       - name: Build Release APK
         working-directory: android
         env:
@@ -244,9 +208,8 @@ jobs:
           KEY_ALIAS:     ${{ secrets.KEY_ALIAS }}
           KEY_PASS:      ${{ secrets.KEY_PASS }}
         run: |
-          gradle assembleRelease --no-daemon
+          gradle assembleRelease --no-daemon --stacktrace
 
-      # ─────────────── ۱۱) Upload APK ───────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -254,7 +217,6 @@ jobs:
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
-      # ─────────────── ۱۲) Upload keystore (backup) ───────────────
       - name: Upload keystore backup
         uses: actions/upload-artifact@v4
         with:
