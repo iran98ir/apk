@@ -5,23 +5,26 @@ import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.*
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import android.graphics.Color
 
 class WebActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
+    private lateinit var rootLayout: FrameLayout
     private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
     private val FILE_CHOOSER_REQ = 1001
 
@@ -29,7 +32,7 @@ class WebActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val root = FrameLayout(this)
+        rootLayout = FrameLayout(this)
 
         // ── نوار پیشرفت ──
         progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
@@ -39,9 +42,8 @@ class WebActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.MATCH_PARENT,
             dp(3)
         )
-        progLp.topMargin = 0
         progressBar.layoutParams = progLp
-        root.addView(progressBar)
+        rootLayout.addView(progressBar)
 
         // ── WebView ──
         webView = WebView(this)
@@ -50,11 +52,24 @@ class WebActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         webView.layoutParams = wvLp
-        root.addView(webView)
+        rootLayout.addView(webView)
 
-        setContentView(root)
+        setContentView(rootLayout)
 
-        // ── تنظیمات WebView ──
+        setupWebView()
+        setupClients()
+        setupDownloadListener()
+
+        // لود اولیه
+        if (Config.webUrl.isNotEmpty()) {
+            webView.loadUrl(Config.webUrl)
+        } else {
+            showErrorPage("offline")
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setupWebView() {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -75,12 +90,14 @@ class WebActivity : AppCompatActivity() {
             CookieManager.getInstance().setAcceptCookie(true)
             CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
         }
+    }
 
+    private fun setupClients() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
 
-                // ── لینک‌های همیشه مرورگر (browserOnly) ──
+                // لینک‌های همیشه مرورگر
                 if (Config.webBrowserOnly.isNotEmpty()) {
                     val domains = Config.webBrowserOnly.split(",").map { it.trim() }
                     if (domains.any { url.contains(it, ignoreCase = true) }) {
@@ -89,7 +106,7 @@ class WebActivity : AppCompatActivity() {
                     }
                 }
 
-                // ── لینک‌های خارجی ──
+                // لینک‌های خارجی
                 if (Config.webExtLink) {
                     val mainHost = Uri.parse(Config.webUrl).host ?: ""
                     val thisHost = request.url.host ?: ""
@@ -111,9 +128,20 @@ class WebActivity : AppCompatActivity() {
                 progressBar.visibility = View.GONE
             }
 
-            override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+            override fun onReceivedError(
+                view: WebView,
+                request: WebResourceRequest,
+                error: WebResourceError
+            ) {
                 if (request.isForMainFrame) {
-                    showErrorPage(error.errorCode)
+                    val errKey = when (error.errorCode) {
+                        WebViewClient.ERROR_HOST_LOOKUP      -> "dns"
+                        WebViewClient.ERROR_TIMEOUT          -> "timeout"
+                        WebViewClient.ERROR_CONNECT          -> "down"
+                        WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> "ssl"
+                        else -> "offline"
+                    }
+                    showErrorPage(errKey)
                 }
             }
         }
@@ -141,8 +169,9 @@ class WebActivity : AppCompatActivity() {
                 return true
             }
         }
+    }
 
-        // ── دانلود ──
+    private fun setupDownloadListener() {
         webView.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
             try {
                 val req = DownloadManager.Request(Uri.parse(url))
@@ -159,13 +188,6 @@ class WebActivity : AppCompatActivity() {
                 // دانلود ناموفق
             }
         }
-
-        // ── لود اولیه ──
-        if (Config.webUrl.isNotEmpty()) {
-            webView.loadUrl(Config.webUrl)
-        } else {
-            showErrorPage(-1)
-        }
     }
 
     private fun openInBrowser(url: String) {
@@ -176,26 +198,18 @@ class WebActivity : AppCompatActivity() {
         }
     }
 
-    private fun showErrorPage(code: Int) {
+    private fun showErrorPage(errKey: String) {
         val root = FrameLayout(this)
         root.setBackgroundColor(Color.parseColor(Config.errorBg))
 
         val container = LinearLayout(this)
         container.orientation = LinearLayout.VERTICAL
-        container.gravity = android.view.Gravity.CENTER
+        container.gravity = Gravity.CENTER
         container.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         container.setPadding(dp(28), dp(28), dp(28), dp(28))
-
-        val errKey = when (code) {
-            ERROR_HOST_LOOKUP -> "dns"
-            ERROR_TIMEOUT -> "timeout"
-            ERROR_CONNECT -> "down"
-            ERROR_FAILED_SSL_HANDSHAKE -> "ssl"
-            else -> "offline"
-        }
 
         val iconSvg = Config.errorItemField(errKey, "iconSvg", "")
         val iconColor = Config.errorItemField(errKey, "iconColor", "#DC2626")
@@ -229,10 +243,10 @@ class WebActivity : AppCompatActivity() {
                 iconBox.background = shape
             }
 
-            val iv = android.widget.ImageView(this)
+            val iv = ImageView(this)
             val ivPx = dp(iconSize)
             val ivLp = FrameLayout.LayoutParams(ivPx, ivPx)
-            ivLp.gravity = android.view.Gravity.CENTER
+            ivLp.gravity = Gravity.CENTER
             iv.layoutParams = ivLp
             SvgLoader.loadInto(iv, iconSvg, iconColor, iconColorOn)
             iconBox.addView(iv)
@@ -240,31 +254,31 @@ class WebActivity : AppCompatActivity() {
             container.addView(iconBox)
         }
 
-        val tvTitle = android.widget.TextView(this)
+        val tvTitle = TextView(this)
         tvTitle.text = title
         tvTitle.setTextColor(Color.parseColor(Config.errorTxt))
         tvTitle.textSize = Config.errorTSize.toFloat()
         tvTitle.setTypeface(tvTitle.typeface, android.graphics.Typeface.BOLD)
-        tvTitle.gravity = android.view.Gravity.CENTER
+        tvTitle.gravity = Gravity.CENTER
         container.addView(tvTitle)
 
         if (desc.isNotEmpty()) {
-            val tvDesc = android.widget.TextView(this)
+            val tvDesc = TextView(this)
             tvDesc.text = desc
             tvDesc.setTextColor(Color.parseColor(Config.errorTxt))
             tvDesc.alpha = 0.72f
             tvDesc.textSize = Config.errorDSize.toFloat()
-            tvDesc.gravity = android.view.Gravity.CENTER
+            tvDesc.gravity = Gravity.CENTER
             tvDesc.setPadding(0, dp(12), 0, 0)
             container.addView(tvDesc)
         }
 
-        val btn = android.widget.TextView(this)
+        val btn = TextView(this)
         btn.text = Config.errorRetryText
         btn.setTextColor(Color.WHITE)
         btn.textSize = 16f
         btn.setTypeface(btn.typeface, android.graphics.Typeface.BOLD)
-        btn.gravity = android.view.Gravity.CENTER
+        btn.gravity = Gravity.CENTER
 
         val btnShape = android.graphics.drawable.GradientDrawable()
         btnShape.shape = android.graphics.drawable.GradientDrawable.RECTANGLE
@@ -285,9 +299,9 @@ class WebActivity : AppCompatActivity() {
         btn.layoutParams = btnLp
 
         btn.setOnClickListener {
+            setContentView(rootLayout)
             if (Config.webUrl.isNotEmpty()) {
                 webView.loadUrl(Config.webUrl)
-                setContentView(webView.parent as View)
             }
         }
         container.addView(btn)
@@ -321,12 +335,12 @@ class WebActivity : AppCompatActivity() {
     }
 
     private fun showExitDialog() {
-        val builder = AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle(Config.exitTitle)
             .setMessage(Config.exitMsg)
             .setPositiveButton(Config.exitYes) { _, _ -> finish() }
             .setNegativeButton(Config.exitNo, null)
-        builder.show()
+            .show()
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
